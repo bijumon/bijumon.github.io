@@ -1,0 +1,81 @@
+body {
+    font-family: "Fira Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+}
+
+code,
+pre {
+    font-family: "Fira Code", "Fira Mono", SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+
+a {
+    text-decoration: none;
+}
+
+hr {
+    overflow: visible; /* For IE */
+    padding: 0;
+    border: none;
+    border-top: medium double #999;
+    color: #666;
+    text-align: center;
+}
+hr:after {
+    content: "❖";
+    display: inline-block;
+    position: relative;
+    top: -0.7em;
+    font-size: 1.5em;
+    padding: 0 0.5em;
+    background: white;
+}
+
+.masthead .title a {
+    color: #008800;
+    font-size: xx-large;
+    font-weight: 900;
+}
+
+@media (prefers-color-scheme: dark) {
+    .masthead .title a {
+        color: #44FFFF;
+    }
+
+    hr::after {
+        background: #111;
+        color: #bbb;
+    }
+}
+
+@media screen and (min-width: 960px) {
+    body {
+        font-size: 14px;
+    }
+}
+
+@media screen and (min-width: 1366px) {
+    body {
+        font-size: 16px;
+    }
+}
+
+@media screen and (min-width: 1920px) {
+    body {
+        font-size: 20px;
+    }
+}
+
+
+.footer {
+    padding: 1em 0;
+}
+
+.tags a::after {
+    content: "/";
+    color: #999;
+    padding-left: 8px;
+}
+
+.tags a:last-child::after {
+    content:none;
+    padding: 0;
+}

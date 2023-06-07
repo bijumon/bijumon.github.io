@@ -1,5 +1,5 @@
 baseURL = "https://bijumon.github.io/pgen/"
-title = "python static site generator"
+title = "@bijumon"
 copyright = "Copyright © 2000–2023 bijumon"
 
 [author]
