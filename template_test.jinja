@@ -1,0 +1,10 @@
+<html>
+    <head>
+        <title>{% block title %}{{ post.title }}{% endblock title %}</title>
+    </head>
+    <body>
+    <h1>{{ post.title }}</h1>
+    <h4>{{ post.date }}</h4>
+    {{ post.content }}
+    </body>
+</html>

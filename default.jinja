@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>{% block title %}{{ title }}{% endblock title %}</title>
+        
+        <link rel="stylesheet" type="text/css" href="/css/styles.css">
+        <link rel="shortcut icon" href="/images/favicon.ico">
+        <link rel="alternate" type="application/rss+xml" href="/rss.xml" title="Updates">
+    </head>
+    <body>
+        <div class="masthead">
+            <p class="title"><a href="/">site.title</a></p>
+        </div>
+
+        <div id="content">
+        {% block content %}
+        {% endblock content %}
+        </div>
+
+        <div class="footer">
+            Copyright © 2000–2023
+        </div>
+</body>
+</html>
