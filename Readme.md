@@ -1,3 +1,6 @@
++++
++++
+
 A simple static site generator in python3, convert markdown to html
 
 deps: pydoit, Markdown, toml, jija2 templates
