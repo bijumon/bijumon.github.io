@@ -1,5 +1,5 @@
 +++
-date = "2017 mar 31"
+date = "2000 sep 15"
 +++
 
 [markdown sample](https://gist.github.com/rt2zz/e0a1d6ab2682d2c47746950b84c0b6ee) by [rt2zz](https://gist.github.com/rt2zz)@github
@@ -148,7 +148,11 @@ Here's a "line block":
 
 and images can be specified like so:
 
-![example image](example-image.jpg "An exemplary image")
+## example image 
+
+![PAINTING IN BAGH CAVE 2 Bodhisattva](PAINTING_IN_BAGH_CAVE_2_Bodhisattva.jpg "PAINTING IN BAGH CAVE 2 Bodhisattva")
+
+source: [Wikimedia Commons](https://commons.wikimedia.org/wiki/File:PAINTING_IN_BAGH_CAVE_2_Bodhisattva.jpg)
 
 Inline math equations go in like so: $\omega = d\phi / dt$. Display
 math should get its own line and be put in in double-dollarsigns:
