@@ -1,33 +1,40 @@
 from markdown import markdown
 from datetime import datetime
+from dataclasses import dataclass
 from jinja2 import Environment, FileSystemLoader
 from pathlib import Path
 from toml import load as toml_load_from_file , loads as toml_load_from_str
 from pprint import pprint
 
+@dataclass
 class Config:
+
     def load(self, config_file: Path) -> dict:
         with open(config_file, "r") as f:
             return toml_load_from_file(f)
 
 class Content:
+    def __init__(self, config: Config) -> None:
+        self.config = config
+
     def load(self,source_dir) -> list:
         items = []
         extensions = ['md', 'markdown', 'cmark']
         for ext in extensions:
             for content_file in Path(f"{source_dir}").glob(f"**/*.{ext}"):
-                with open(content_file, 'r') as f:
-                    frontmatter, text = f.read().split('+++',2)[1:]
-                item = toml_load_from_str(frontmatter)
-                
-                if "title" not in item:
-                    item["title"] = str(content_file.with_suffix('')) 
-                item["content"] = markdown(text, extensions=['fenced_code', 'codehilite', 'tables'])
-                item["slug"] = self.slugify(str(content_file.stem))
-                item["url"] = str(content_file.with_suffix('.html'))
-                if not "date" in item:
-                    item["date"] = str(datetime.now())
-                items.append(item)
+                if not str(content_file) in self.config["ignore"]:
+                    with open(content_file, 'r') as f:
+                        frontmatter, text = f.read().split('+++',2)[1:]
+                    item = toml_load_from_str(frontmatter)
+                    
+                    if "title" not in item:
+                        item["title"] = str(content_file.with_suffix('')) 
+                    item["content"] = markdown(text, extensions=['fenced_code', 'codehilite', 'tables'])
+                    item["slug"] = self.slugify(str(content_file.stem))
+                    item["url"] = str(content_file.with_suffix('.html'))
+                    if not "date" in item:
+                        item["date"] = str(datetime.now())
+                    items.append(item)
                 
         items.sort(key=lambda x: x["date"], reverse=True)
         return items
@@ -47,8 +54,6 @@ class Template:
 
 class Site:
     def __init__(self, config, content_items, template_directory: Path) -> None:
-
-        pprint(config)
         templates = Template()
         environment = templates.load(template_directory)
         
@@ -67,7 +72,7 @@ class Site:
 if __name__ == '__main__':
     #config = Config()
     config = Config().load("config.toml")
-    content = Content()
+    content = Content(config)
     content_items = { "posts": content.load(".") }
     #for i in content_items["posts"]: 
     #    for key, value in i.items():

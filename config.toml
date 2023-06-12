@@ -1,6 +1,7 @@
 baseURL = "https://bijumon.github.io/pgen/"
 title = "@bijumon"
 copyright = "Copyright © 2000–2023 bijumon"
+ignore = [ 'Readme.md' ]
 
 [author]
   name = 'bijumon'
