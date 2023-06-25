@@ -6,18 +6,70 @@ from pathlib import Path
 from toml import load as toml_load_from_file , loads as toml_load_from_str
 from pprint import pprint
 
-@dataclass
-class Config:
 
+class Config:
     def load(self, config_file: Path) -> dict:
         with open(config_file, "r") as f:
             return toml_load_from_file(f)
 
-class Content:
-    def __init__(self, config: Config) -> None:
-        self.config = config
+class Template:
+    def __init__(self, template_directory):
+        self.environment = self.load(template_directory)
 
-    def load(self,source_dir) -> list:
+    def load(self, template_directory: Path):
+        return Environment(loader=FileSystemLoader(template_directory))
+
+class Content:
+    def __init__(self, config: Config, input_file: Path) -> None:
+        self.filename = input_file
+        self.config = config
+        self.frontmatter: dict = {}
+        self.content: str = ""
+
+    def load(self,input_file):
+        with open(input_file, 'r') as f:
+            metadata, text = f.read().split('+++',2)[1:]
+            self.frontmatter = toml_load_from_str(metadata)
+        self.content = self.parse(text)
+        self.defaults()
+    
+    def defaults(self):
+        if "title" not in self.frontmatter:
+            self.frontmatter["title"] = self.slugify(str(self.filename.stem))
+        if not "url" in self.frontmatter:    
+            self.frontmatter["url"] = str(self.filename.with_suffix('.html'))
+        if not "date" in self.frontmatter:
+            self.frontmatter["date"] = str(datetime.now())
+        if not "layout" in self.frontmatter:
+            self.frontmatter["layout"] = "post"
+    
+    def parse(self, text: str):
+        return markdown(text, extensions=['fenced_code', 'codehilite', 'tables'])
+    
+    def convert(self,templates: Template, output_file):
+        #print(self.frontmatter)
+        template = self.frontmatter["layout"]
+        template_filename = f"{template}.jinja"
+        if Path(template_filename).exists():
+            print(f"using {template_filename} template")
+            template_file = templates.environment.get_template(f"{template}.jinja")
+        else:
+            print("using default template")
+            template_file = templates.environment.get_template("default.jinja")
+        self.frontmatter["content"] = self.content
+        with open(output_file, "w") as f:
+            f.write(template_file.render(site=self.config,post=self.frontmatter))
+
+    # from https://www.30secondsofcode.org/python/s/slugify/
+    def slugify(self, s):
+        import re
+        s = s.lower().strip()
+        s = re.sub(r'[^\w\s-]', '', s)
+        s = re.sub(r'[\s_-]+', '-', s)
+        s = re.sub(r'^-+|-+$', '', s)
+        return s
+    
+    def old_load(self,source_dir) -> list:
         items = []
         extensions = ['md', 'markdown', 'cmark']
         for ext in extensions:
@@ -38,22 +90,9 @@ class Content:
                 
         items.sort(key=lambda x: x["date"], reverse=True)
         return items
-
-    # from https://www.30secondsofcode.org/python/s/slugify/
-    def slugify(self, s):
-        import re
-        s = s.lower().strip()
-        s = re.sub(r'[^\w\s-]', '', s)
-        s = re.sub(r'[\s_-]+', '-', s)
-        s = re.sub(r'^-+|-+$', '', s)
-        return s
-
-class Template:
-    def load(self, template_directory: Path):
-        return Environment(loader=FileSystemLoader(template_directory))
-
+    
 class Site:
-    def __init__(self, config, content_items, template_directory: Path) -> None:
+    def convert(self, config, content_items, template_directory: Path) -> None:
         templates = Template()
         environment = templates.load(template_directory)
         
@@ -70,14 +109,15 @@ class Site:
         index_file.close()
 
 if __name__ == '__main__':
-    #config = Config()
-    config = Config().load("config.toml")
-    content = Content(config)
-    content_items = { "posts": content.load(".") }
-    #for i in content_items["posts"]: 
-    #    for key, value in i.items():
-    #        if key not in {"content"}:
-    #            pprint(key + ' - ' + value)
-    #    pprint("---")
+    extensions = ['md', 'markdown', 'cmark']
+    site_config = Config().load("config.toml")
+    templates = Template(".")
 
-    site = Site(config, content_items, ".")
+    for ext in extensions:
+        for input_file in Path(".").glob(f"**/*.{ext}"):
+            output_file = input_file.with_suffix('.html')
+
+            if not str(input_file) in site_config["ignore"]:
+                content_file = Content(site_config, input_file)
+                content_file.load(input_file)
+                content_file.convert(templates, output_file)
