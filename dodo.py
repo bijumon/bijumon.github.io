@@ -35,8 +35,8 @@ def task_convert():
 
 def build_index():
     post = { "title": "frontpage" }
+    items.sort(key=lambda x: x["date"], reverse=True)
     content_items = { "posts" : items }
-    print(content_items)
     index_template = templates.environment.get_template("index.jinja")
     with open("index.html", "w") as index_file:
         index_file.write(index_template.render(posts=content_items,site=site_config,post=post))
