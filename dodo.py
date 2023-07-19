@@ -26,12 +26,12 @@ def task_convert():
                 content_item.update(content_file.frontmatter)
                 items.append(content_item)
                 
-            yield {
-                "name": str(input_file),
-                "actions": [(content_file.convert, [templates, output_file])],
-                "file_dep": [input_file],
-                "targets": [output_file]
-            }
+                yield {
+                    "name": str(input_file),
+                    "actions": [(content_file.convert, [templates, output_file])],
+                    "file_dep": [input_file],
+                    "targets": [output_file]
+                }
 
 def build_index():
     post = { "title": "frontpage" }
