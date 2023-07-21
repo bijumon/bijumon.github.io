@@ -79,7 +79,7 @@ def elapsed_time_in_minutes(number_of_layers, elapsed_bake_time):
 
 ## Solution
 
-```
+``` python
 """Functions used in preparing Guido's gorgeous lasagna.
 
 Learn about Guido, the creator of the Python language: https://en.wikipedia.org/wiki/Guido_van_Rossum
