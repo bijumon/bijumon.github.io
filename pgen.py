@@ -49,13 +49,13 @@ class Content:
     def convert(self,templates: Template, output_file):
         #print(self.frontmatter)
         template = self.frontmatter["layout"]
-        template_filename = f"{template}.jinja"
+        template_filename = f"static/templates/{template}.jinja"
         if Path(template_filename).exists():
             print(f"using {template_filename} template")
-            template_file = templates.environment.get_template(f"{template}.jinja")
+            template_file = templates.environment.get_template(f"static/templates/{template}.jinja")
         else:
             print("using default template")
-            template_file = templates.environment.get_template("default.jinja")
+            template_file = templates.environment.get_template("static/templates/default.jinja")
         self.frontmatter["content"] = self.content
         with open(output_file, "w") as f:
             f.write(template_file.render(site=self.config,post=self.frontmatter))

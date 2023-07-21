@@ -34,16 +34,16 @@ def task_convert():
                 }
 
 def build_index():
-    post = { "title": "frontpage" }
+    post = { "title": "blog" }
     items.sort(key=lambda x: x["date"], reverse=True)
     content_items = { "posts" : items }
-    index_template = templates.environment.get_template("index.jinja")
-    with open("index.html", "w") as index_file:
+    index_template = templates.environment.get_template("static/templates/blog.jinja")
+    with open("blog.html", "w") as index_file:
         index_file.write(index_template.render(posts=content_items,site=site_config,post=post))
 
 def task_build_index():
     yield {
         "name": "build index",
         "actions": [(build_index)],
-        "targets": ["index.html"]
+        "targets": ["blog.html"]
     }
