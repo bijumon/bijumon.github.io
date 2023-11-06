@@ -16,10 +16,11 @@ def task_convert():
     extensions = ['md', 'markdown', 'cmark']
     for ext in extensions:
         for input_file in Path(".").glob(f"**/*.{ext}"):
+            print(input_file)
             content_item = {}
             output_file = input_file.with_suffix('.html')
 
-            if not str(input_file) in site_config["ignore"]:
+            if not str(input_file) in site_config["ignore"] or not str(input_file).startswith('_'):
                 content_file = Content(site_config, input_file)
                 content_file.load(input_file)
                 content_item["content"] = content_file.content
@@ -38,12 +39,12 @@ def build_index():
     items.sort(key=lambda x: x["date"], reverse=True)
     content_items = { "posts" : items }
     index_template = templates.environment.get_template("static/templates/blog.jinja")
-    with open("blog.html", "w") as index_file:
+    with open("index.html", "w") as index_file:
         index_file.write(index_template.render(posts=content_items,site=site_config,post=post))
 
 def task_build_index():
     yield {
         "name": "build index",
         "actions": [(build_index)],
-        "targets": ["blog.html"]
+        "targets": ["index.html"]
     }

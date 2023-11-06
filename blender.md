@@ -1,22 +1,9 @@
 +++
-title = "frontpage - Welcome"
+title = "blender 3D"
 layout = "page"
 +++
 
-[Python docs](https://docs.python.org/3/) -
-[Tutorial](https://docs.python.org/3/tutorial/index.html) - [Data
-Structures](https://docs.python.org/3/tutorial/datastructures.html) -
-[Stdlib](https://docs.python.org/3/tutorial/stdlib.html) -
-[Pathlib](https://docs.python.org/3/library/pathlib.html#pathlib.PurePath.stem) -
-[Argparse](https://docs.python.org/3/library/argparse.html) - [Errors
-and Exceptions](https://docs.python.org/3/tutorial/errors.html) -
-[Built-in
-Exceptions](https://docs.python.org/3/library/exceptions.html) -
-[unittest](https://docs.python.org/3/library/unittest.html) -
-[Markdown](https://python-markdown.github.io/)
-
---- 
-## Blender
+## Blender ##
 
 1. [Fundamentals v2.8 from Blender Foundation- YouTube](https://www.youtube.com/playlist?list=PLa1F2ddGya_-UvuAqHAksYnB0qL9yWDO6)
 1. [Blender 3 basics: Intro to Blender - Learn Blender | Online 3D tutorials with CG Cookie](http://cgcookie.com/courses/blender-3-basics-intro-to-blender)
