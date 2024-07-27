@@ -1,15 +1,15 @@
-from markdown import markdown
+from markdown_it import MarkdownIt as Markdown
 from datetime import datetime
 from dataclasses import dataclass
 from jinja2 import Environment, FileSystemLoader
 from pathlib import Path
-from toml import load as toml_load_from_file , loads as toml_load_from_str
+from tomllib import load as toml_load_from_file , loads as toml_load_from_str
 from pprint import pprint
 
 
 class Config:
     def load(self, config_file: Path) -> dict:
-        with open(config_file, "r") as f:
+        with open(config_file, "rb") as f:
             return toml_load_from_file(f)
 
 class Template:
@@ -44,7 +44,8 @@ class Content:
             self.frontmatter["layout"] = "post"
     
     def parse(self, text: str):
-        return markdown(text, extensions=['fenced_code', 'codehilite', 'tables'])
+        md = Markdown('commonmark')
+        return md.render(text)
     
     def convert(self,templates: Template, output_file):
         #print(self.frontmatter)
