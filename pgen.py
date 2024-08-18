@@ -6,7 +6,6 @@ from pathlib import Path
 from tomllib import load as toml_load_from_file , loads as toml_load_from_str
 from pprint import pprint
 
-
 class Config:
     def load(self, config_file: Path) -> dict:
         with open(config_file, "rb") as f:

@@ -3,17 +3,19 @@ title = "frontpage - Welcome"
 layout = "page"
 +++
 
-[Python docs](https://docs.python.org/3/) -
-[Tutorial](https://docs.python.org/3/tutorial/index.html) - [Data
-Structures](https://docs.python.org/3/tutorial/datastructures.html) -
-[Stdlib](https://docs.python.org/3/tutorial/stdlib.html) -
-[Pathlib](https://docs.python.org/3/library/pathlib.html#pathlib.PurePath.stem) -
-[Argparse](https://docs.python.org/3/library/argparse.html) - [Errors
-and Exceptions](https://docs.python.org/3/tutorial/errors.html) -
-[Built-in
-Exceptions](https://docs.python.org/3/library/exceptions.html) -
-[unittest](https://docs.python.org/3/library/unittest.html) -
+## Python ##
+
+[Python docs](https://docs.python.org/3/) /
+[Tutorial](https://docs.python.org/3/tutorial/index.html) /
+[Data Structures](https://docs.python.org/3/tutorial/datastructures.html) /
+[Stdlib](https://docs.python.org/3/tutorial/stdlib.html) /
+[Pathlib](https://docs.python.org/3/library/pathlib.html#pathlib.PurePath.stem) /
+[Argparse](https://docs.python.org/3/library/argparse.html) / 
+[Errors and Exceptions](https://docs.python.org/3/tutorial/errors.html) /
+[Built-in Exceptions](https://docs.python.org/3/library/exceptions.html) /
+[unittest](https://docs.python.org/3/library/unittest.html) /
 [Markdown](https://python-markdown.github.io/)
+
 ---
 
 [Introduction to Bluefin Linux](https://universal-blue.discourse.group/t/introduction-to-bluefin/41) / 
@@ -23,8 +25,10 @@ Exceptions](https://docs.python.org/3/library/exceptions.html) -
 [Latest documentation](https://universal-blue.discourse.group/tags/c/bluefin/6/documentation) / 
 [MLBox, Ollama, Alpaca, mods, Pytorch](https://universal-blue.discourse.group/t/machine-learning/705) / 
 [Nvidia 555 drivers incoming, important information! - Bluefin and Aurora](https://universal-blue.discourse.group/t/nvidia-555-drivers-incoming-important-information/2554)
---- 
-## Blender
+
+---
+
+## Blender ##
 
 1. [Fundamentals v2.8 from Blender Foundation- YouTube](https://www.youtube.com/playlist?list=PLa1F2ddGya_-UvuAqHAksYnB0qL9yWDO6)
 1. [Blender 3 basics: Intro to Blender - Learn Blender | Online 3D tutorials with CG Cookie](http://cgcookie.com/courses/blender-3-basics-intro-to-blender)
