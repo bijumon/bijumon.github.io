@@ -24,7 +24,8 @@ def task_convert():
                 content_file.load(input_file)
                 content_item["content"] = content_file.content
                 content_item.update(content_file.frontmatter)
-                items.append(content_item)
+                if not str(input_file) == "index.md":
+                    items.append(content_item)
                 
                 yield {
                     "name": str(input_file),
