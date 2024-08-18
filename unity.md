@@ -3,8 +3,6 @@ title = "Unity game engine"
 date = "2023-07-21 19:00 IST"
 +++
 
-Unity game engine
------------------
 - [Unity Essentials Pathway - Unity Learn](https://learn.unity.com/pathway/unity-essentials)
 - [Basic Concepts in Unity for Software Engineers | Eyas's Blog](https://blog.eyas.sh/2020/10/unity-for-engineers-pt1-basic-concepts/)
 - [Unity Learn](https://learn.unity.com/)
