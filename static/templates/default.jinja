@@ -5,7 +5,26 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>{% block title %}{{ post.title }}{% endblock title %}</title>
 
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Anek+Odia:wght@100..800&family=Nunito+Sans:ital,opsz,wght@0,6..12,200..1000;1,6..12,200..1000&family=Nunito:ital,wght@0,200..1000;1,200..1000&display=swap" rel="stylesheet">
+        <style>
+          :root {
+            --pico-font-family: "Nunito Sans", sans-serif;
+          }
+          a { text-decoration: none; }
+          h1, h2, h3{
+            --pico-font-family: "Nunito", sans-serif;
+            --pico-font-weight: bold;
+          }
+          .masthead > h1 > a {
+            font-family: "Anek Odia", sans-serif;
+            font-weight: 900;
+          }
+          #content > article > h2 { text-transform: capitalize; }
+        </style>
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.classless.css">
+
         <link rel="shortcut icon" href="favicon.ico">
     </head>
     <body>
