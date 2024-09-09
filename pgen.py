@@ -43,7 +43,8 @@ class Content:
             self.frontmatter["layout"] = "post"
     
     def parse(self, text: str):
-        md = Markdown('commonmark')
+        md = Markdown('commonmark').enable("linkify")
+        md.options["linkify"] = True
         return md.render(text)
     
     def convert(self,templates: Template, output_file):
