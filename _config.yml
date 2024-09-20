@@ -1,9 +1,10 @@
 # Setup
-title: Poole
-tagline: The Jekyll Butler
-url: https://getpoole.com
-paginate: 1
-baseurl: ""
+title: Weekly
+tagline: fuel for the dev firehose
+url: https://bijumon.github.io/weekly/
+paginate: 19
+paginate_path: "/firehose/page:num/"
+baseurl: "/weekly"
 permalink: pretty
 
 # Gems
@@ -33,9 +34,9 @@ sass:
 
 # Specify the author for blog posts
 author:
-  name: Mark Otto
-  url: https://twitter.com/mdo
-  email: markdotto@gmail.com
+  name: bijumon
+  url: https://bijumon.github.io
+  email: biju.punalor->geem
 
 # Custom vars
-version: 3.0.0
+version: 0.1
