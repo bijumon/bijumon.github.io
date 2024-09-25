@@ -179,7 +179,6 @@ abbr[title] {
 blockquote {
   padding: 0.5rem 1rem;
   margin: 0.8rem 0;
-  color: var(--gray-500);
   border-left: 0.25rem solid var(--border-color);
 }
 blockquote p:last-child {
