@@ -1,0 +1,12 @@
+---
+layout: default
+---
+
+{% for post in site.posts %}
+  {% if post.tags contains 'latest' %}
+    <article>
+        <p># {{ post.date | date: "%B %d, %Y" }}, <a href="{{ post.url }}">permalink</a></p>
+        <p>{{ post.content }}</p>
+    </article>
+  {% endif %}
+{% endfor %}

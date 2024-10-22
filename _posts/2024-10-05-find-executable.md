@@ -1,14 +1,13 @@
+at---
+layout: post
+title: find-executable
+date: 2024-10-05 04:37 +0000
+tags: [ tips, linux, latest ]
 ---
-date: 2024-09-20 03:41 +0530
-layout: page
-tags: [ tips, linux ]
----
 
-# Tips #
+[Search for executable files using find command](https://stackoverflow.com/questions/4458120/search-for-executable-files-using-find-command)
 
-
-
-[Search for executable files using find command](https://stackoverflow.com/questions/4458120/search-for-executable-files-using-find-command), answered by GreenGiant - Stack Overflow](https://stackoverflow.com/users/539048/greengiant)
+> answered by [GreenGiant - Stack Overflow](https://stackoverflow.com/users/539048/greengiant)
 
 On GNU versions of find you can use `-executable`:
 
