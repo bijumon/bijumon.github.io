@@ -1,7 +1,7 @@
 ---
 title: find-executable
 date: 2024-10-05 04:37 +0000
-tags: [ tips, linux, latest ]
+tags: [ linux, tips, frontpage ]
 ---
 
 [Search for executable files using find command](https://stackoverflow.com/questions/4458120/search-for-executable-files-using-find-command)
