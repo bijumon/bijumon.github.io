@@ -1,34 +1,44 @@
 ---
 layout: default
 ---
+<div class="nav">
+  <ul>
+  {% for page in site.pages %}
+    {% if page.title %}
+    <li><a href="{{ page.url }}">{{ page.title }}</a></li>
+    {% endif %}
+  {% endfor %}
+  </ul>
+</div>
+<hr/>
+
+<div class="nav">
+{% assign all_tags = "" | split: "" %}
+{% for post in site.posts %}
+  {% assign all_tags = all_tags | concat: post.tags %}
+{% endfor %}
+
+{% assign unique_tags = all_tags | uniq %}
+
+  <ul>
+  {% for tag in unique_tags %}
+    <li>{{ tag }}</li>
+  {% endfor %}
+  </ul>
+</div>
+<hr/>
 
 {{ content }}
 
 <div class="posts">
-  {% for post in paginator.posts %}
+  {% for post in site.posts %}
   <article class="post">
-    <h1 class="post-title">
-      <a href="{{ post.url | relative_url }}">
-        {{ post.title }}
-      </a>
-    </h1>
-
-    <time datetime="{{ post.date | date_to_xmlschema }}" class="post-date">{{ post.date | date_to_string }}</time>
-
+    <div class="title"> # 
+      <time datetime="{{ post.date | date_to_xmlschema }}" class="datetime">{{ post.date | date_to_string }}</time>
+      <a class="url" href="{{ post.url | relative_url }}">permalink</a>
+    </div>
     {{ post.content }}
   </article>
+  <hr/>
   {% endfor %}
-</div>
-
-<div class="pagination">
-  {% if paginator.next_page %}
-    <a class="pagination-item older" href="{{ paginator.next_page_path | relative_url }}">Older</a>
-  {% else %}
-    <span class="pagination-item older">Older</span>
-  {% endif %}
-  {% if paginator.previous_page %}
-    <a class="pagination-item newer" href="{{ paginator.previous_page_path | prepend: relative_url }}">Newer</a>
-  {% else %}
-    <span class="pagination-item newer">Newer</span>
-  {% endif %}
 </div>

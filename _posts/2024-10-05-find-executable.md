@@ -1,5 +1,4 @@
 ---
-layout: post
 title: find-executable
 date: 2024-10-05 04:37 +0000
 tags: [ tips, linux, latest ]

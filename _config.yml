@@ -1,42 +1,43 @@
 # Setup
-title: Weekly
-tagline: fuel for the dev firehose
-url: https://bijumon.github.io/weekly/
-paginate: 19
-paginate_path: "/firehose/page:num/"
-baseurl: "/weekly"
-permalink: pretty
-
-# Gems
-plugins:
-  - jekyll-gist
-  - jekyll-paginate
-  - jekyll-seo-tag
-
-# Optimize Jekyll
-exclude:
-  - .editorconfig
-  - .git
-  - .jekyll-cache
-  - Gemfile
-  - Gemfile.lock
-  - LICENSE.md
-  - README.md
-
-sass:
-  sass_dir: _sass
-  style: :compressed
-
-# Options
-
-# Replace this value and uncomment to enable Google Analytics tracking
-# ga_analytics: UA-000000-0
-
 # Specify the author for blog posts
 author:
   name: bijumon
-  url: https://bijumon.github.io
-  email: biju.punalor->geem
+  url: https://bijumon.github.io/about/
+  email: me@gee.mail
 
-# Custom vars
-version: 0.1
+title: Firehose Weekly
+tagline: fuel for the dev firehose
+description: >- # this means to ignore newlines until "baseurl:"
+  Write an awesome description for your new site here. You can edit this
+  line in _config.yml. It will appear in your document head meta (for
+  Google search results) and in your feed.xml site description.
+baseurl: ""
+url: "https://bijumon.github.io"
+permalink: "/:categories/:slug/"
+
+plugins:
+  - jekyll-feed
+
+markdown: CommonMark
+commonmark:
+  options: ["FOOTNOTES"]
+  extensions: ["strikethrough", "autolink", "table"]
+
+exclude:
+    - Readme.md
+    - Gemfile
+    - Gemfile.lock
+
+# frontmatter defaults
+defaults:
+  -
+    scope:
+      path: ""
+    values:
+      layout: "page"
+  -
+    scope:
+      path: ""
+      type: "posts"
+    values:
+      layout: "post"

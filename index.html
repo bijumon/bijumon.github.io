@@ -1,12 +1,19 @@
 ---
-layout: default
 ---
 
-{% for post in site.posts %}
-  {% if post.tags contains 'latest' %}
-    <article>
-        <p># {{ post.date | date: "%B %d, %Y" }}, <a href="{{ post.url }}">permalink</a></p>
-        <p>{{ post.content }}</p>
-    </article>
-  {% endif %}
+{% assign frontpage_posts = site.posts | where: "tags", "frontpage" %}
+
+{% for post in frontpage_posts %}
+  <article class="post">
+    <h2 class="title"><a href="{{ post.url | relative_url }}">{{ post.title }}</a></h2>
+    <div class="post-meta">
+      <time datetime="{{ post.date | date_to_xmlschema }}">{{ post.date | date: "%B %-d, %Y" }}</time>
+    </div>
+    {% if post.excerpt %}
+      <div class="post-excerpt">
+        {{ post.excerpt }}
+        <a href="{{ post.url | relative_url }}" class="read-more">Read more</a>
+      </div>
+    {% endif %}
+  </article>
 {% endfor %}
