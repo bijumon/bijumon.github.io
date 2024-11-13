@@ -1,36 +1,17 @@
 ---
 ---
 
-{% assign frontpage_posts = site.posts | where: "tags", "frontpage" %} {% for
-post in frontpage_posts %}
-<article class="post">
-  <h2 class="title">
-    <a href="{{ post.url | relative_url }}">{{ post.title }}</a>
-  </h2>
-  <div class="post-meta">
-    <time datetime="{{ post.date | date_to_xmlschema }}"
-      >{{ post.date | date: "%B %-d, %Y" }}</time
-    >
-  </div>
-  {% if post.excerpt %}
-  <div class="post-excerpt">
-    {{ post.excerpt }}
-    <a href="{{ post.url | relative_url }}" class="read-more">Read more</a>
-  </div>
-  {% endif %}
-</article>
-{% endfor %}
+{% assign frontpage_posts = site.posts | where: "tags", "frontpage" %} 
 
 <div class="posts">
   {% for post in frontpage_posts %}
   <article class="post">
-    <div class="title">
+    <div class="meta">
       #
-      <time datetime="{{ post.date | date_to_xmlschema }}" class="datetime"
-        >{{ post.date | date_to_string }}</time
-      >
+      <time datetime="{{ post.date | date_to_xmlschema }}" class="datetime">{{ post.date | date_to_string }}</time>
       <a class="url" href="{{ post.url | relative_url }}">permalink</a>
     </div>
+    <p class="title">{{ post.title }}</p>
     {{ post.content }}
   </article>
   <hr />

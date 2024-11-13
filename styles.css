@@ -2,12 +2,56 @@
     --links: #6679cc; /* Always applied */
 }
 
+body {
+    font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', 'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji', sans-serif;
+}
+
+pre, code {
+    font-family: 'fira code', monospace;
+}
+
+.nav > ul {
+    list-style: none; /* Removes the default list styling */
+    padding: 0;
+}
+  
+.nav > ul li {
+    display: inline; /* Makes the list items appear inline */
+    position: relative;
+}
+  
+.nav > ul li::after {
+    content: "▸"; /* Adds the bullet */
+    padding: 0 4px 0 6px; /* Adds space between content and bullet */
+}
+  
+.nav > ul li:last-child::after {
+    content: ""; /* Removes the bullet after the last item */
+}
+
+.posts > .post {
+    margin: 4rem 0;
+}
+
+.posts > .post {
+  margin: 4rem 0;
+}
+
+.posts > .post > .title {
+  font-size: 120%;
+  font-weight: bold;
+  text-transform: capitalize;
+}
+
+footer {
+    border: 0; 
+}
+
 code { background: none; }
 
 .highlight > code {
   background: var(--background);
 }
-
 .highlight table td { padding: 5px; }
 .highlight table pre { margin: 0; }
 .highlight, .highlight .w {
@@ -159,43 +203,4 @@ code { background: none; }
     .highlight .ss {
     color: #83a598;
     }
-}
-
-body {
-    font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', 'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji', sans-serif;
-}
-
-pre, code {
-    font-family: 'fira code', monospace;
-}
-
-.nav > ul {
-    list-style: none; /* Removes the default list styling */
-    padding: 0;
-}
-  
-.nav > ul li {
-    display: inline; /* Makes the list items appear inline */
-    position: relative;
-}
-  
-.nav > ul li::after {
-    content: "▸"; /* Adds the bullet */
-    padding: 0 4px 0 6px; /* Adds space between content and bullet */
-}
-  
-.nav > ul li:last-child::after {
-    content: ""; /* Removes the bullet after the last item */
-}
-
-.posts > .post {
-    margin: 4rem 0;
-}
-
-.posts > .post > .title {
-  margin: 4rem 0;
-}
-
-footer {
-    border: 0; 
 }

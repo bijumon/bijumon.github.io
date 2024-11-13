@@ -41,3 +41,9 @@ defaults:
       type: "posts"
     values:
       layout: "post"
+  - 
+    scope:
+      path: "notes"  # Path to apply the default
+      type: "pages"  # Only apply to pages, not posts
+    values:
+      categories: "notes"

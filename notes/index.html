@@ -1,0 +1,10 @@
+---
+---
+
+{% assign pages_category_posts = site.pages | where: "categories", "notes" %}
+
+{% for page in pages_category_posts %}
+  <h2><a href="{{ page.url }}">{{ page.title }}</a></h2>
+  {{ page.content }}
+{% endfor %}
+<hr />

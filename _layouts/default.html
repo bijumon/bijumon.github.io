@@ -19,7 +19,10 @@
       </main>
 
       <footer class="footer">
-        &copy; <time datetime="{{ site.time | date_to_xmlschema }}">{{ site.time | date: '%Y' }}</time> <a href="{{ site.author.url }}">{{ site.author.name }}</a>
+        &copy; <time datetime="{{ site.time | date_to_xmlschema }}">2009 - {{ site.time | date: '%Y' }}</time> 
+        <a href="{{ site.author.url }}">{{ site.author.name }}</a>
+        &blacktriangleright; <a href={{ "/firehose/" | relative_url }}>firehose</a>
+        &blacktriangleright; <a href={{ "/notes/" | relative_url }}>notes</a>
       </footer>
     </div>
 
