@@ -1,0 +1,16 @@
+## user
+In India, what are the charges for a mastercard titanium debit card
+## assistant
+
+The fees associated with a Mastercard Titanium Debit Card in India vary depending on the issuing bank. Below is a summary of charges from several banks offering this card:
+
+| **Bank**                          | **Issuance Fee** | **Annual Fee** | **Replacement Fee** | **Daily ATM Withdrawal Limit** | **Daily Purchase Limit** | **Additional Information**                                                                                                                                                                                                 |
+|-----------------------------------|------------------|----------------|---------------------|-------------------------------|---------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **HDFC Bank**                     | Not specified    | ₹250 + taxes   | ₹200 + taxes        | Not specified                | Not specified            | For HNW customers (Classic, Preferred & Imperia), the Debit Card will be free, as long as the customer is part of the respective program. citeturn0search3 |
+| **Bandhan Bank**                  | Not specified    | Not specified  | Not specified        | ₹40,000                      | ₹3,00,000                | citeturn0search2                                                                                                                                           |
+| **IndusInd Bank**                 | Account-dependent| Account-dependent| Not specified      | ₹50,000                      | ₹1,00,000                | citeturn0search4                                                                                                                                           |
+| **Axis Bank** (Titanium Prime)    | ₹50              | ₹150           | ₹200                 | ₹50,000                      | ₹1,00,000                | citeturn0search5                                                                                                                                           |
+| **South Indian Bank**             | ₹300             | ₹300           | Not specified        | Not specified                | Not specified            | citeturn0search8                                                                                                                                           |
+| **Tamilnad Mercantile Bank (TMB)**| Free             | Free           | ₹250 + GST           | Not specified                | Not specified            | Renewal fee: ₹250 + GST for primary card; ₹150 + GST for add-on card. citeturn0search6                                                                                                           |
+
+Please note that these charges are subject to change and may vary based on the specific account type and the bank's policies. For the most accurate and up-to-date information, it's advisable to contact the respective bank directly or visit their official website. 
