@@ -1,0 +1,1887 @@
+---
+title: "SSG - Static site generator"
+---
+
+# SSGv3: Complete Design Document
+
+**Static Site Generator with Validate-Then-Commit Architecture**
+
+Version: 3.0
+Last Updated: 2025-10-04
+
+---
+
+## Table of Contents
+
+1. [Core Concept](#core-concept)
+2. [Architecture Overview](#architecture-overview)
+3. [Build Flow](#build-flow)
+4. [Entities](#entities)
+5. [Configuration System](#configuration-system)
+6. [Frontmatter Parsing](#frontmatter-parsing)
+7. [Permalink System](#permalink-system)
+8. [Cache Strategy](#cache-strategy)
+9. [Index Generation](#index-generation)
+10. [Pipeline Stages](#pipeline-stages)
+11. [Processor Interface](#processor-interface)
+12. [Service Interfaces](#service-interfaces)
+13. [Error Handling](#error-handling)
+14. [Performance Characteristics](#performance-characteristics)
+
+---
+
+## Core Concept
+
+SSGv3 uses a **validate-then-commit** architecture with **incremental validation** by default.
+
+**Key Principles:**
+- Everything flows through the system as a **BuildItem**
+- Two-phase build: **Validate** (read-only) then **Commit** (write)
+- Cache is trusted for incremental builds (fast)
+- Full validation available for paranoid builds (safe)
+- Atomic output updates - never partial builds
+- All errors reported upfront before any writes
+
+**Build Philosophy:**
+1. Load config
+2. Discover all content
+3. Validate everything (trust cache for unchanged items)
+4. If ANY errors → abort and show all errors
+5. If validation passes → commit all changes atomically
+
+---
+
+## Architecture Overview
+
+### Two-Phase Design
+
+**Phase 1: VALIDATE (Read-Only)**
+- Discover all files
+- Check cache for unchanged items
+- Fully process changed/new items
+- Detect all errors
+- Compute all output paths
+- Check for collisions
+- No disk writes
+
+**Phase 2: COMMIT (Write)**
+- Write all changed outputs
+- Update cache atomically
+- Generate indexes
+- Write manifest
+- Clean up orphaned files
+
+### Component Hierarchy
+
+```
+SSGv3
+├── Config (from config.toml)
+├── BuildContext (shared state)
+├── BuildPipeline
+│   ├── DiscoveryStage
+│   ├── ValidationStage
+│   └── CommitStage
+├── Processors
+│   ├── MarkdownContentProcessor
+│   ├── SassProcessor
+│   ├── CopyProcessor
+│   └── IndexGenerator
+└── Services
+    ├── CacheManager
+    ├── TemplateRenderer
+    ├── OutputWriter
+    ├── PermalinkGenerator
+    └── MetadataExtractor
+```
+
+---
+
+## Build Flow
+
+### Complete Build Sequence
+
+```
+1. Startup
+   - Parse CLI arguments
+   - Load config.toml
+   - Deserialize to Config dataclass
+   - Run ConfigValidator
+   - Initialize Services
+   - Initialize BuildPipeline
+
+2. DiscoveryStage
+   - Walk content directories
+   - Apply PathFilter (skip blacklisted, dot files, output/cache dirs)
+   - Extract category from directory structure
+   - Create BuildItem(state=RAW) for each file
+   - Output: List[BuildItem]
+
+3. ValidationStage (Incremental Mode - Default)
+   For each BuildItem:
+     a. Compute content hash
+     b. Check cache:
+        - Hash matches → load metadata from cache, mark VALIDATED
+        - Hash differs → full validation:
+          * Read file
+          * Parse frontmatter
+          * Extract metadata
+          * Transform content (markdown→HTML)
+          * Detect errors
+          * Mark VALIDATED or ERROR
+
+     c. Check URL collisions across all items
+     d. If any errors → collect and abort before commit
+
+   Output: List[BuildItem(state=VALIDATED)] or error list
+
+4. CommitStage
+   - Call processor.before_build() for all processors
+
+   For each changed item:
+     - Write output file
+     - Update cache entry
+
+   - Call processor.after_build() for all processors
+     * IndexGenerator runs here
+     * Generates category indexes, main index, RSS
+
+   - Update manifest
+   - CleanupStage: remove orphaned outputs
+
+   Output: Build statistics
+
+5. Report Results
+   - Total files
+   - Processed (changed)
+   - Skipped (cached)
+   - Failed (validation errors)
+```
+
+### Incremental Validation Details
+
+**Cache Trust Strategy:**
+- If `hash(file_content) + processor_id + template_hashes` matches cache → skip processing
+- Load metadata from cache (don't re-read/re-parse file)
+- Still check URL collisions
+- Still track template dependencies
+
+**Performance:**
+- 1000 posts, 1 changed: ~1 second
+- 999 hash checks (~1ms each)
+- 1 full processing
+- Memory holds only changed content + all metadata
+
+**Cache Invalidation Triggers:**
+- Source file content changed
+- Template file changed (via dependency tracking)
+- Config changed (permalink format, markdown settings)
+- Cache schema version mismatch
+- Manual: `ssg clean`
+
+### Full Validation Mode (Optional)
+
+```bash
+ssg build --full-validation
+```
+
+```toml
+[build]
+validation_mode = "full"
+```
+
+**Full mode adds:**
+- Stat every file (verify exists)
+- Check file permissions
+- Verify file readable
+- Still skip content transformation if hash matches
+
+**Use for:**
+- CI/CD deployments
+- Production builds
+- After system updates
+- Debugging
+
+---
+
+## Entities
+
+### BuildItem (Base Class)
+
+Represents anything the system builds.
+
+**Attributes:**
+```
+BuildItem:
+  src: Path | None          # Source file (None for generated items)
+  out: Path                 # Output path
+  kind: str                 # "content", "asset", "index", "feed"
+  mtime: float              # Source modification time
+  state: BuildState         # RAW | VALIDATED | WRITTEN
+  hash: str                 # Content hash for cache checking
+```
+
+**States:**
+- `RAW` - Just discovered, not validated
+- `VALIDATED` - Checked, ready to commit
+- `WRITTEN` - Output file written
+
+### ContentItem (Specialized)
+
+```
+ContentItem(BuildItem):
+  metadata: dict
+    - title: str
+    - date: datetime
+    - date_iso: str
+    - date_formatted: str
+    - slug: str
+    - category: str
+    - tags: List[str]
+    - url: str
+
+  html: str                      # Rendered HTML content
+  templates_used: List[Path]     # For dependency tracking
+```
+
+### AssetItem (Specialized)
+
+```
+AssetItem(BuildItem):
+  asset_type: str                # "static", "sass", "image"
+```
+
+### IndexItem (Specialized)
+
+```
+IndexItem(BuildItem):
+  page: int                      # Pagination page number
+  items: List[ContentItem]       # Content in this index
+  metadata: dict
+    - category: str (optional)
+    - total_pages: int
+```
+
+### Examples
+
+**Blog Post:**
+```
+ContentItem(
+  src=Path('content/python/hello.md'),
+  out=Path('public/python/2024/10/hello/index.html'),
+  kind='content',
+  state=VALIDATED,
+  metadata={
+    'title': 'Hello Python',
+    'category': 'python',
+    'date': datetime(2024, 10, 4),
+    'slug': 'hello',
+    'url': '/python/2024/10/hello/'
+  }
+)
+```
+
+**Static Asset:**
+```
+AssetItem(
+  src=Path('assets/css/style.css'),
+  out=Path('public/assets/css/style.css'),
+  kind='asset',
+  asset_type='static',
+  state=VALIDATED
+)
+```
+
+**Generated Index:**
+```
+IndexItem(
+  src=None,
+  out=Path('public/python/index.html'),
+  kind='index',
+  state=VALIDATED,
+  metadata={'category': 'python'}
+)
+```
+
+---
+
+## Configuration System
+
+### Config Dataclass
+
+```python
+@dataclass
+class Config:
+    # Paths
+    content_dir: Path
+    asset_dir: Path
+    output_dir: Path
+    cache_dir: Path = Path('.cache')
+    template_dir: Optional[Path] = None
+
+    # Content
+    content_extensions: List[str] = ['.md', '.markdown']
+    blacklist: List[str] = []
+
+    # Permalinks
+    permalink_templates: Dict[str, str] = {
+        'default': '/{year}/{month:02d}/{day:02d}/{slug}/'
+    }
+    default_category: str = ''
+
+    # Site
+    site_title: str = 'My Site'
+    site_url: str = 'https://example.com'
+    site_description: str = ''
+    site_author: str = ''
+
+    # Pagination
+    page_size: int = 10
+
+    # Markdown
+    markdown_extensions: List[str] = ['codehilite', 'fenced_code', 'toc', 'tables']
+    markdown_extension_configs: Dict[str, Dict] = {}
+
+    # Build
+    incremental: bool = True
+    validation_mode: str = 'incremental'  # or 'full'
+    clean_output: bool = False
+
+    @classmethod
+    def from_toml(cls, path: Path) -> 'Config'
+```
+
+### config.toml Example
+
+```toml
+# config.toml
+
+# Paths
+content_dir = "content"
+asset_dir = "assets"
+output_dir = "public"
+cache_dir = ".cache"
+template_dir = "templates"
+
+# Content
+content_extensions = [".md", ".markdown"]
+blacklist = ["drafts/", "README.md"]
+
+# Permalinks
+default_category = ""
+
+[permalink_templates]
+default = "/{year}/{month:02d}/{day:02d}/{slug}/"
+page = "/{slug}/"
+doc = "/{category}/{slug}/"
+
+# Site
+[site]
+title = "My Blog"
+url = "https://example.com"
+description = "A blog about things"
+author = "Jane Doe"
+
+# Pagination
+[pagination]
+page_size = 10
+
+# Markdown
+[markdown]
+extensions = ["codehilite", "fenced_code", "toc", "tables"]
+
+[markdown.extension_configs.codehilite]
+css_class = "highlight"
+linenums = true
+
+[markdown.extension_configs.toc]
+anchorlink = true
+
+# Build
+[build]
+incremental = true
+validation_mode = "incremental"
+clean_output = false
+```
+
+### Configuration Loading
+
+```
+1. CLI specifies: ssg build --config path/to/config.toml
+2. Or look in current directory: ./config.toml
+3. Parse TOML → dict
+4. Convert string paths to Path objects
+5. Deserialize to Config dataclass
+6. Run ConfigValidator.validate(config)
+7. Pass to BuildPipeline
+```
+
+### Configuration Validation
+
+**ConfigValidator checks:**
+- Required fields present
+- Paths exist (content_dir, asset_dir)
+- Permalink templates valid:
+  - `{slug}` present (required)
+  - Valid format syntax
+  - Known placeholders only
+- site_url format (http:// or https://)
+- No conflicting directories (output != cache)
+- page_size > 0
+- markdown_extensions are strings
+- validation_mode in ['incremental', 'full']
+
+**On validation error:**
+- Print helpful error message
+- Show expected format
+- Suggest fix
+- Exit with code 1
+
+### Environment-Specific Configs
+
+```
+config.toml          # Base
+config.dev.toml      # Dev overrides
+config.prod.toml     # Prod overrides
+```
+
+```bash
+ssg build --env dev
+ssg build --env prod
+```
+
+Merge base config with environment-specific overrides.
+
+---
+
+## Frontmatter Parsing
+
+### When Parsing Happens
+
+**NOT in DiscoveryStage** (too expensive)
+
+**IN ValidationStage** (only for changed items)
+
+### Parsing Flow
+
+```
+1. Read file content
+   - Try utf-8 encoding
+   - Fallback to latin-1
+
+2. Use python-frontmatter library
+   - Separates YAML/TOML frontmatter from content
+   - Returns metadata dict + content string
+
+3. Parse dates with dateutil.parser
+   - Handles: "2024-10-04 13:00 IST"
+   - Handles: "2024-09-22 11:54 +0530"
+   - Strip timezone (keep naive datetime)
+
+4. Merge metadata with defaults
+```
+
+### Metadata Precedence
+
+```
+Final metadata = generated_defaults
+               + directory_metadata
+               + frontmatter_overrides
+```
+
+**Generated defaults:**
+- `slug` from filename
+- `title` from filename
+- `date` from file mtime
+
+**Directory metadata:**
+- `category` from parent directory
+
+**Frontmatter overrides:**
+- Any field in frontmatter overrides above
+
+### Frontmatter Example
+
+```yaml
+---
+title: My Custom Title
+date: 2024-10-04 13:00 IST
+category: tutorials
+tags: [python, web]
+slug: custom-slug
+---
+
+# Content starts here
+```
+
+### Error Handling
+
+**Malformed YAML:**
+- Log error: "Failed to parse frontmatter in {file}: {error}"
+- Return None from validation
+- Mark item as ERROR
+- Continue validating other files
+- Show all errors at end
+
+**Invalid date format:**
+- Log warning: "Invalid date in {file}, using mtime"
+- Fall back to file mtime
+- Continue processing
+
+**Missing fields:**
+- Use defaults (title from filename, date from mtime)
+- No error, just defaults
+
+**Unreadable file:**
+- Log error: "Cannot read {file}: {error}"
+- Mark as ERROR
+- Continue validation
+
+---
+
+## Permalink System
+
+### Core Concept
+
+Permalink = Template + Metadata
+
+Template has placeholders filled from item metadata.
+
+### Supported Placeholders
+
+- `{year}` - 4-digit year
+- `{month}` - Month number (1-12)
+- `{month:02d}` - Zero-padded month (01-12)
+- `{day}` - Day number (1-31)
+- `{day:02d}` - Zero-padded day (01-31)
+- `{slug}` - URL-safe slug (REQUIRED)
+- `{category}` - Category from directory or frontmatter
+
+### Template Examples
+
+```
+Blog (date-based):
+  /{year}/{month:02d}/{day:02d}/{slug}/
+  → /2024/10/04/my-post/
+
+Docs (category-based):
+  /{category}/{slug}/
+  → /python/my-post/
+
+Flat:
+  /{slug}/
+  → /my-post/
+
+Hybrid:
+  /{category}/{year}/{slug}/
+  → /python/2024/my-post/
+```
+
+### Template Validation
+
+**Required:**
+- `{slug}` must be present (ensures uniqueness)
+
+**Optional:**
+- Date placeholders (content without dates still works)
+- `{category}` (works with or without categories)
+
+**Invalid:**
+- Unknown placeholders → error at config validation
+- Invalid format syntax → error
+
+### Category Extraction
+
+**From directory structure:**
+
+```
+content/                    → category = ""
+content/python/             → category = "python"
+content/python/web/file.md  → category = "python" (single-level)
+```
+
+**Single-level extraction:**
+- Uses immediate parent directory only
+- Ignores deeper nesting
+- Simpler URLs, easier reasoning
+
+**Future:** Could add full-path option via config
+
+### Category Override
+
+Frontmatter overrides directory-based category:
+
+```yaml
+---
+category: tutorials  # Override "python" from directory
+---
+```
+
+**Use cases:**
+- Content organization ≠ URL structure
+- A/B testing categorizations
+- Legacy content migration
+
+### URL Collision Detection
+
+**Problem:** Two files generate same URL
+
+**Detection:** During ValidationStage, build map `url → src`
+
+**On collision:**
+```
+ERROR: URL collision detected
+  URL: /python/2024/10/my-post/
+  Sources:
+    - content/python/my-post.md
+    - content/python/tutorials/my-post.md
+
+  Fix: Use different slugs or override category in frontmatter
+```
+
+**Build aborts** - forces explicit resolution
+
+### PermalinkGenerator Interface
+
+```
+PermalinkGenerator:
+  set_template(format_string: str) -> None
+  validate_template() -> None (raises ValueError)
+  generate(metadata: dict) -> str
+```
+
+**Responsibilities:**
+- Parse template placeholders
+- Validate required placeholders
+- Map metadata to URL
+- URL-encode special characters
+- Return path string
+
+**NOT responsible for:**
+- Extracting metadata
+- Checking uniqueness
+- Writing files
+
+### Template Changes
+
+Permalink template is global config.
+
+**If template changes:**
+- All items have new output paths
+- Cache becomes invalid
+- Full rebuild required
+- Store template hash in manifest to detect
+
+---
+
+## Cache Strategy
+
+### Two-Table Schema
+
+**Table 1: build_items**
+```sql
+CREATE TABLE build_items (
+    src TEXT PRIMARY KEY,
+    out TEXT NOT NULL,
+    kind TEXT NOT NULL,
+    hash TEXT NOT NULL,        -- Combined hash for incremental builds
+    processor_id TEXT NOT NULL,
+    mtime REAL NOT NULL
+)
+```
+
+Tracks all processed files (content + assets).
+
+**Table 2: content_metadata**
+```sql
+CREATE TABLE content_metadata (
+    src TEXT PRIMARY KEY,
+    title TEXT NOT NULL,
+    date_iso TEXT NOT NULL,
+    date_formatted TEXT NOT NULL,
+    url TEXT NOT NULL,
+    slug TEXT NOT NULL,
+    category TEXT NOT NULL,
+    html_content TEXT NOT NULL,
+    templates_used TEXT NOT NULL,  -- JSON array
+    FOREIGN KEY (src) REFERENCES build_items(src)
+)
+```
+
+Stores content-specific metadata.
+
+### Hash Computation
+
+```
+item_hash = hash(file_content)
+          + processor.id
+          + hash(templates_used)
+          + hash(relevant_metadata)
+```
+
+**More reliable than mtime:**
+- Detects actual content changes
+- Works with git checkout
+- Works with cloud sync
+- Catches template changes
+
+### Template Dependency Tracking
+
+**Problem:** Template change rebuilds everything
+
+**Solution:** Track which templates each item uses
+
+**How:**
+1. During rendering, TemplateRenderer records accessed templates
+2. Store in `ContentItem.templates_used`
+3. Save to `content_metadata.templates_used` (JSON)
+4. When template changes:
+   - Compute new template hash
+   - Query items using that template
+   - Only rebuild affected items
+
+### Cache Trust in Incremental Mode
+
+**If hash matches:**
+- Trust file unchanged
+- Load metadata from cache
+- Skip reading file
+- Skip parsing frontmatter
+- Skip content transformation
+- Mark as VALIDATED
+
+**Cache checked for:**
+- Content hash match
+- Processor ID match
+- Template hashes match
+
+**Cache invalidated on:**
+- Source file changed
+- Template changed
+- Config changed
+- Processor updated
+- Manual `ssg clean`
+
+### CacheManager Interface
+
+```
+CacheManager:
+  needs_processing(src: Path, hash: str) -> bool
+  mark_processed(item: BuildItem) -> None
+  save_content_metadata(item: ContentItem) -> None
+  get_all_content() -> List[ContentItem]
+  get_content_by_category(category: str) -> List[ContentItem]
+  get_items_using_template(template: Path) -> List[BuildItem]
+```
+
+### Cache Failure Handling
+
+**Corrupted database:**
+- Detect via schema version check
+- Log warning
+- Delete cache
+- Full rebuild
+
+**Missing cache:**
+- First build, expected
+- Create new cache
+- Process everything
+
+**Partial cache:**
+- Some items missing
+- Process missing items
+- Update cache
+
+---
+
+## Index Generation
+
+### Design Approach
+
+IndexGenerator is a special processor running in `after_build()` phase.
+
+### IndexGenerator Interface
+
+```
+IndexGenerator(Processor):
+  can_handle(item) -> False  # Doesn't process discovered items
+
+  before_build(context):
+    pass  # No setup
+
+  process(item, services):
+    pass  # Doesn't process items
+
+  after_build(context):
+    # All index generation happens here
+```
+
+### Generation Flow
+
+**In after_build():**
+
+```
+1. Query all processed content
+   items = context.get_all_items(kind='content')
+
+2. Generate category indexes
+   by_category = group_by(items, 'metadata.category')
+   for category, category_items in by_category:
+     create_index(category, category_items)
+
+3. Generate main index (paginated)
+   pages = paginate(items, page_size=10)
+   for page_num, page_items in enumerate(pages):
+     create_paginated_index(page_num, page_items)
+
+4. Generate RSS feed
+   create_feed(items[:20])
+
+5. Generate sitemap
+   create_sitemap(items)
+```
+
+### Index Pages as BuildItems
+
+```
+IndexItem(
+  src=None,  # Virtual
+  out=Path('public/python/index.html'),
+  kind='index',
+  metadata={'category': 'python', 'items': [...]}
+)
+```
+
+Written via OutputWriter like any other item.
+
+### Pagination
+
+```
+IndexItem(out='public/index.html', metadata={'page': 1})
+IndexItem(out='public/page/2/index.html', metadata={'page': 2})
+IndexItem(out='public/page/3/index.html', metadata={'page': 3})
+```
+
+Template receives page number and items for that page.
+
+### Why after_build()
+
+**Advantages:**
+- Only includes successfully validated items
+- Has complete picture of all content
+- Can compute statistics (tag counts, category counts)
+- Validation failures don't corrupt index
+
+**vs during-build approach:**
+- During-build could include items that later fail
+- Index might be inconsistent
+
+---
+
+## Pipeline Stages
+
+### Stage Interface
+
+```
+PipelineStage(ABC):
+  run(context: BuildContext) -> None
+```
+
+Each stage modifies BuildContext and passes to next stage.
+
+### DiscoveryStage
+
+**Input:** Config
+
+**Process:**
+```
+1. Walk content_dir recursively
+2. Apply PathFilter:
+   - Skip output_dir, cache_dir
+   - Skip dot directories (.git, .cache)
+   - Skip blacklisted paths
+   - Skip dot files
+3. For each file:
+   - Determine kind (check extension)
+   - Extract category (parent directory)
+   - Stat file (get mtime, size)
+   - Create BuildItem(state=RAW)
+```
+
+**Output:** `context.items = List[BuildItem(state=RAW)]`
+
+**No file reading** - fast, filesystem metadata only
+
+### ValidationStage
+
+**Input:** `List[BuildItem(state=RAW)]`
+
+**Process (Incremental Mode):**
+```
+errors = []
+
+For each item:
+  1. Compute hash = hash(file_content) + processor.id + template_hashes
+
+  2. Check cache:
+     if cache.has_item(src, hash):
+       # FAST PATH
+       item.metadata = cache.get_metadata(src)
+       item.state = VALIDATED
+       continue
+
+     # SLOW PATH - changed item
+     try:
+       Read file
+       Parse frontmatter
+       Extract metadata
+       Transform content
+       item.state = VALIDATED
+     except Exception as e:
+       errors.append((item, e))
+       item.state = ERROR
+
+3. Build URL map, detect collisions
+
+4. If errors:
+     print all errors
+     abort build
+```
+
+**Output:**
+- Success: `List[BuildItem(state=VALIDATED)]`
+- Failure: Error list, exit
+
+**Full Validation Mode:**
+- Also stat every file
+- Verify readable
+- Still skip transformation if hash matches
+
+### CommitStage
+
+**Input:** `List[BuildItem(state=VALIDATED)]`
+
+**Process:**
+```
+1. Call processor.before_build(context) for all processors
+
+2. For each changed item:
+   - Get processor via can_handle()
+   - Call processor.process(item, services)
+   - Write output
+   - Update cache
+   - item.state = WRITTEN
+
+3. Call processor.after_build(context) for all processors
+   - IndexGenerator runs here
+   - Generates indexes, feeds, sitemap
+
+4. Update manifest atomically
+
+5. CleanupStage:
+   - Find outputs in old manifest not in current build
+   - Delete orphaned files
+```
+
+**Output:** Build statistics
+
+**Atomic guarantee:**
+- Cache updated only after all writes succeed
+- On write failure, cache remains old state
+- Can retry build without corruption
+
+---
+
+## Processor Interface
+
+### Base Interface
+
+```
+Processor(ABC):
+  id: str                    # Processor version for cache
+
+  can_handle(item: BuildItem) -> bool
+
+  before_build(context: BuildContext) -> None
+
+  process(item: BuildItem, services: Services) -> BuildItem
+
+  after_build(context: BuildContext) -> None
+```
+
+### Lifecycle Phases
+
+**before_build()** - Setup
+- Load templates into memory
+- Initialize caches
+- Prepare shared resources
+- Called once per build
+
+**process()** - Transform
+- Read source (if not cached)
+- Parse/transform content
+- Render templates
+- Write output
+- Return updated item
+- Called per item
+
+**after_build()** - Finalization
+- Generate auxiliary content
+- Flush caches
+- Create sitemaps/feeds
+- Called once per build
+
+### MarkdownContentProcessor
+
+**can_handle:**
+```python
+return item.kind == 'content' and item.src.suffix in ['.md', '.markdown']
+```
+
+**process:**
+```
+1. Read file content
+2. Parse frontmatter (YAML/TOML)
+3. Extract metadata with precedence
+4. Parse dates with dateutil
+5. Convert markdown to HTML
+6. Render template
+7. Write output
+8. Track templates used
+9. Return updated ContentItem
+```
+
+**Tracks:**
+- Templates used (for dependency tracking)
+- Metadata for index generation
+
+### SassProcessor
+
+**can_handle:**
+```python
+return item.kind == 'asset' and item.src.suffix == '.scss'
+```
+
+**process:**
+```
+1. Read SCSS
+2. Compile to CSS
+3. Generate source maps
+4. Minify (optional)
+5. Write output
+```
+
+### CopyProcessor
+
+**can_handle:**
+```python
+return item.kind == 'asset'
+```
+
+**process:**
+```
+1. Copy file with shutil.copy2
+2. Preserve mtime
+```
+
+Fallback for unknown asset types.
+
+### IndexGenerator
+
+**can_handle:**
+```python
+return False  # Special processor
+```
+
+**after_build:**
+```
+1. Query context.get_all_items(kind='content')
+2. Group by category
+3. Generate category indexes
+4. Paginate main index
+5. Generate RSS feed
+6. Generate sitemap
+7. Write all via OutputWriter
+```
+
+---
+
+## Service Interfaces
+
+Services are pluggable for testability and extensibility.
+
+### FileManager (Abstract)
+
+```
+FileManager(ABC):
+  read(path: Path) -> bytes
+  read_text(path: Path, encoding: str) -> str
+  write(path: Path, data: bytes) -> None
+  write_text(path: Path, content: str) -> None
+  copy(src: Path, dest: Path) -> None
+  remove(path: Path) -> None
+  hash_file(path: Path) -> str
+  exists(path: Path) -> bool
+  stat(path: Path) -> FileStat
+```
+
+**Default:** LocalFileManager (filesystem)
+
+**Alternative:** S3FileManager, MemoryFileManager (testing)
+
+### TemplateRenderer (Abstract)
+
+```
+TemplateRenderer(ABC):
+  load_templates(template_dir: Path) -> None
+  render(template_name: str, context: dict) -> str
+  get_template_hash(template_name: str) -> str
+  get_templates_used() -> List[Path]
+```
+
+**Default:** Jinja2Renderer
+
+**Features:**
+- Template inheritance
+- Partials/includes
+- Custom filters
+- Autoescaping
+
+### PermalinkGenerator (Abstract)
+
+```
+PermalinkGenerator(ABC):
+  set_template(format: str) -> None
+  validate_template() -> None
+  generate(metadata: dict) -> str
+```
+
+**Default:** PatternPermalinkGenerator
+
+**Alternative:** CustomPermalinkGenerator (complex routing)
+
+### MetadataExtractor
+
+```
+MetadataExtractor:
+  parse_frontmatter(content: str) -> dict
+  extract_from_file(item: BuildItem, config: Config) -> dict
+  generate_slug(text: str) -> str
+  generate_title(filename: str) -> str
+  parse_date(date_value: Any) -> datetime
+```
+
+Handles:
+- Frontmatter parsing (YAML/TOML)
+- Metadata extraction
+- Slug generation
+- Date parsing (flexible formats)
+
+### OutputWriter
+
+```
+OutputWriter:
+  write_html(path: Path, content: str) -> None
+  copy_file(src: Path, dest: Path) -> None
+  ensure_directory(path: Path) -> None
+  remove_file(path: Path) -> None
+```
+
+All file writes go through this interface.
+
+### Services Bundle
+
+```
+Services:
+  cache: CacheManager
+  templates: TemplateRenderer
+  output: OutputWriter
+  permalinks: PermalinkGenerator
+  metadata: MetadataExtractor
+```
+
+Passed to `processor.process()` to avoid many parameters.
+
+---
+
+## Error Handling
+
+### Validation Phase Errors
+
+**Collected, not thrown:**
+```
+errors: List[Tuple[BuildItem, Exception]] = []
+
+For each item:
+  try:
+    validate(item)
+  except Exception as e:
+    errors.append((item, e))
+    continue  # Keep validating
+```
+
+**All errors shown:**
+```
+ERROR: Found 3 errors during validation
+
+1. content/python/bad.md
+   Failed to parse frontmatter: Invalid YAML at line 5
+
+2. content/tutorials/test.md
+   Invalid date format: "not a date"
+
+3. URL collision: /python/2024/10/post/
+   - content/python/post.md
+   - content/python/tutorials/post.md
+
+Build aborted. Fix errors and retry.
+```
+
+### Error Types
+
+**Validation errors:**
+- Malformed frontmatter
+- Invalid date formats
+- URL collisions
+- Encoding errors
+- Missing required metadata
+- Template not found
+
+**Commit errors:**
+- Permission denied (output dir)
+- Disk full
+- File locked
+
+**Config errors:**
+- Invalid TOML syntax
+- Missing required fields
+- Invalid permalink template
+- Invalid paths
+
+### Error Recovery
+
+**Validation phase:**
+- Collect all errors
+- Show complete report
+- Abort before any writes
+- No partial builds
+
+**Commit phase:**
+- First error stops build
+- Log error clearly
+- Cache remains in old state
+- Can retry without corruption
+
+### User-Friendly Messages
+
+**Bad:**
+```
+KeyError: 'slug'
+```
+
+**Good:**
+```
+ERROR: content/python/test.md
+  Missing required field: 'slug'
+
+  Either:
+    1. Add 'slug' to frontmatter, or
+    2. Ensure filename can generate valid slug
+```
+
+---
+
+## Performance Characteristics
+
+### Incremental Build (Default)
+
+**Scenario:** 1000 posts, 1 file changed
+
+```
+DiscoveryStage:     ~100ms  (walk filesystem)
+ValidationStage:    ~1s     (999 hash checks, 1 full process)
+CommitStage:        ~50ms   (write 1 file, update cache)
+Total:              ~1.2s
+```
+
+**Memory:** ~50MB (all metadata + 1 content item)
+
+### Full Validation Build
+
+**Scenario:** 1000 posts, paranoid build
+
+```
+DiscoveryStage:     ~100ms
+ValidationStage:    ~5s     (999 stat+hash, 1 full process)
+CommitStage:        ~50ms
+Total:              ~5.2s
+```
+
+**Memory:** ~50MB (metadata only)
+
+### Cold Build (No Cache)
+
+**Scenario:** 1000 posts, first build
+
+```
+DiscoveryStage:     ~100ms
+ValidationStage:    ~60s    (read + parse + transform all)
+CommitStage:        ~2s     (write all outputs, create cache)
+Total:              ~62s
+```
+
+**Memory:** ~500MB (all content in memory during validation)
+
+### Optimization Strategies
+
+**Parallel Processing (Future):**
+- Validate independent items in parallel
+- Thread-safe cache access
+- 4-8x speedup on multi-core systems
+
+**Lazy Loading:**
+- Load templates on-demand
+- Parse frontmatter only when needed
+- Stream large files
+
+**Cache Warming:**
+- Pre-compute hashes on file watch
+- Background cache updates
+- Faster incremental builds
+
+---
+
+## BuildContext
+
+Shared state across pipeline stages and processors.
+
+### Structure
+
+```
+BuildContext:
+  config: Config                    # Site configuration (immutable)
+  items: List[BuildItem]            # All discovered/processed items
+  manifest: BuildManifest           # Previous build state
+  stats: BuildStats                 # Counters
+  url_map: Dict[str, Path]          # URL collision detection
+```
+
+### Query Interface
+
+```
+get_all_items(kind: str = None,
+              category: str = None,
+              tags: List[str] = None) -> List[BuildItem]
+
+get_item_by_path(src: Path) -> Optional[BuildItem]
+
+get_items_using_template(template: Path) -> List[BuildItem]
+```
+
+Used by IndexGenerator to query processed content.
+
+### BuildStats
+
+```
+BuildStats:
+  total_files: int
+  processed: int      # Changed items
+  skipped: int        # Cached items
+  failed: int         # Validation errors
+  index_generated: bool
+  duration: float
+```
+
+---
+
+## CLI Interface
+
+### Commands
+
+```bash
+# Build sitefrom pathlib import Path
+import logging
+import sys
+
+import click
+
+from pgen.site_generator import SiteGenerator
+
+# Map string names to logging levels
+LOG_LEVELS = {
+    "debug": logging.DEBUG,
+    "info": logging.INFO,
+    "warning": logging.WARNING,
+    "error": logging.ERROR,
+    "critical": logging.CRITICAL,
+}
+
+def setup_logging(level_name: str):
+    """Configure logging"""
+    level = LOG_LEVELS.get(level_name.lower(), logging.INFO)
+
+    logger = logging.getLogger()
+    logger.setLevel(level)
+
+    # handler outputs stderr by default
+    handler = logging.StreamHandler(sys.stdout)
+    handler.setLevel(level)
+
+    # log message format
+    formatter = logging.Formatter(
+        "%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+        datefmt="%H:%M:%S"
+    )
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
+
+    # Log a confirmation message using a logger for this module
+    logger = logging.getLogger(__name__)
+    logger.info(f"logging: {level_name.upper()}")
+
+@click.group(invoke_without_command=True)
+@click.option(
+    "--log-level",
+    type=click.Choice(LOG_LEVELS.keys(), case_sensitive=False),
+    default="info",
+    help="Set the logging level",
+)
+@click.pass_context
+def cli(ctx, log_level):
+    """Static Site Generator"""
+    setup_logging(log_level)
+    ctx.ensure_object(dict)
+    ctx.obj["log_level"] = log_level
+
+    if ctx.invoked_subcommand is None:
+        ctx.invoke(build, source_dir=Path(Path.cwd()/"config.toml"))
+
+@cli.command(name="build")
+@click.option(
+    "-d",
+    "--source-dir",
+    default=".",
+    help="Source directory to build from (default: current directory)",
+)
+@click.pass_context
+def build(ctx, source_dir):
+    """Build the static site."""
+    generator = SiteGenerator(source_dir)
+    generator.build()
+
+@cli.command(name="clean")
+@click.option(
+    "-d",
+    "--source-dir",
+    default=".",
+    help="Source directory to clean (default: current directory)",
+)
+@click.pass_context
+def clean(ctx, source_dir):
+    """Clean the build directory."""
+    generator = SiteGenerator(source_dir)
+    generator.clean()
+
+if __name__ == "__main__":
+    cli(obj={})
+
+ssg build
+
+# Build with options
+ssg build --config path/to/config.toml
+ssg build --env prod
+ssg build --full-validation
+ssg build --verbose
+
+# Clean cache and output
+ssg clean
+
+# Initialize new site
+ssg init
+
+# Watch and rebuild on changes (future)
+ssg watch
+
+# Serve locally (future)
+ssg serve
+```
+
+### Build Command Options
+
+```
+--config PATH       Config file location (default: ./config.toml)
+--env ENV           Environment (dev/prod, loads config.ENV.toml)
+--full-validation   Use full validation mode (paranoid)
+--verbose          Show debug output
+--dry-run          Validate only, don't write outputs
+--clean            Clean before building
+```
+
+### Exit Codes
+
+```
+0   Success
+1   Validation errors
+2   Commit errors
+3   Configuration errors
+4   File system errors
+```
+
+---
+
+## Watch Mode (Future Feature)
+
+### Design
+
+```
+1. Initial build
+2. Watch filesystem for changes
+3. On change:
+   - Debounce (wait 100ms for more changes)
+   - Determine affected items
+   - Run incremental build
+   - Notify browser (LiveReload)
+```
+
+### Change Detection
+
+**File changed:**
+- Reprocess that item only
+- Update cache
+- Regenerate indexes
+
+**Template changed:**
+- Query items using that template
+- Reprocess affected items
+- Update cache
+
+**Config changed:**
+- Full rebuild required
+- Restart watch
+
+### LiveReload Integration
+
+```
+1. Build includes JS snippet
+2. SSG serves WebSocket
+3. On rebuild, send reload message
+4. Browser refreshes
+```
+
+---
+
+## Plugin System (Future Feature)
+
+### Plugin Interface
+
+```
+Plugin(ABC):
+  name: str
+  version: str
+
+  register_processors() -> List[Processor]
+  register_filters() -> Dict[str, Callable]
+  register_commands() -> List[Command]
+
+  on_config_loaded(config: Config) -> None
+  on_build_start(context: BuildContext) -> None
+  on_build_complete(context: BuildContext) -> None
+```
+
+### Example Plugin
+
+```python
+class ImageOptimizationPlugin(Plugin):
+    def register_processors(self):
+        return [ImageOptimizer()]
+
+    def on_build_complete(self, context):
+        # Generate responsive images
+        for item in context.get_all_items(kind='asset'):
+            if is_image(item):
+                generate_thumbnails(item)
+```
+
+### Plugin Discovery
+
+```toml
+[plugins]
+enabled = ["image-optimization", "search-index"]
+
+[plugins.image-optimization]
+quality = 85
+formats = ["webp", "avif"]
+
+[plugins.search-index]
+fields = ["title", "content", "tags"]
+```
+
+---
+
+## Testing Strategy
+
+### Unit Tests
+
+**Test data classes:**
+```python
+def test_build_item_state_transitions():
+    item = BuildItem(state=RAW)
+    assert item.state == RAW
+    item.state = VALIDATED
+    assert item.state == VALIDATED
+```
+
+**Test utilities:**
+```python
+def test_slug_generation():
+    assert generate_slug("Hello World") == "hello-world"
+    assert generate_slug("C++") == "cpp"
+```
+
+### Integration Tests
+
+**Test pipeline stages:**
+```python
+def test_discovery_stage():
+    # Create temp filesystem
+    # Run discovery
+    # Assert correct items found
+```
+
+**Test processors:**
+```python
+def test_markdown_processor():
+    # Create test markdown file
+    # Process
+    # Assert HTML output correct
+```
+
+### End-to-End Tests
+
+**Test complete builds:**
+```python
+def test_incremental_build():
+    # Build once
+    # Modify one file
+    # Build again
+    # Assert only one file processed
+```
+
+### Snapshot Testing
+
+**Test output stability:**
+```python
+def test_output_unchanged():
+    # Build with known input
+    # Compare output to snapshot
+    # Assert no differences
+```
+
+### Performance Tests
+
+**Benchmark builds:**
+```python
+def test_build_performance():
+    # Build 1000 posts
+    # Assert completes in < 60s
+```
+
+---
+
+## Migration from Current SSG
+
+### Compatibility Layer
+
+**Map old concepts to SSGv3:**
+
+```
+Old FileInfo          → BuildItem
+Old ContentType       → Processor
+Old should_rebuild()  → needs_processing() + cache check
+Old process()         → validate() + commit()
+Old CacheManager      → BuildContext + cache tables
+```
+
+### Migration Steps
+
+1. **Add state tracking:**
+   - Wrap FileInfo in BuildItem
+   - Add state field
+
+2. **Split processing:**
+   - Extract validation logic
+   - Separate from writing
+
+3. **Update cache schema:**
+   - Add hash column
+   - Add templates_used column
+   - Migration script for old caches
+
+4. **Refactor pipeline:**
+   - Create stage classes
+   - Move logic from methods to stages
+
+5. **Add validation mode:**
+   - Implement incremental mode
+   - Add full validation option
+
+### Backward Compatibility
+
+**Config migration:**
+```python
+# Old CONFIG dict still works
+config = Config.from_dict(CONFIG)
+```
+
+**Keep old CLI:**
+```bash
+# Old commands still work
+python ssg_generator.py build
+```
+
+**Gradual adoption:**
+- Stage 1: Add BuildItem wrapper
+- Stage 2: Add validation phase
+- Stage 3: Enable commit phase
+- Stage 4: Remove old code
+
+---
+
+## Future Enhancements
+
+### Near-Term
+
+1. **Watch mode** - File watching + live reload
+2. **Parallel processing** - Multi-threaded builds
+3. **Better error messages** - Context + suggestions
+4. **Progress bars** - Visual feedback during builds
+5. **Dry-run mode** - Validate without writing
+
+### Medium-Term
+
+6. **Plugin system** - Extensible architecture
+7. **Multiple content formats** - RST, AsciiDoc, Org
+8. **Asset pipeline** - Sass, TypeScript, image optimization
+9. **Search index** - Client-side full-text search
+10. **Multilingual** - i18n support
+
+### Long-Term
+
+11. **Distributed builds** - Build on multiple machines
+12. **Cloud storage** - S3/GCS output
+13. **Incremental deploys** - Only upload changed files
+14. **Build analytics** - Performance insights
+15. **Visual editor** - GUI for content management
+
+---
+
+## Appendix: Design Decisions
+
+### Why Validate-Then-Commit?
+
+**Problem with immediate writes:**
+- Partial builds leave broken output
+- Can't show all errors at once
+- Hard to implement dry-run
+- Difficult to rollback
+
+**Validate-then-commit solves:**
+- Output always consistent
+- All errors reported upfront
+- Dry-run is just "stop after validate"
+- Easy rollback (just don't commit)
+
+### Why Trust Cache by Default?
+
+**Incremental mode is fast:**
+- 1000 posts, 1 changed: ~1 second
+- Matches user expectations
+- Good for development workflow
+
+**Full validation available when needed:**
+- CI/CD deployments
+- Production builds
+- After system updates
+
+**Risk is low:**
+- Hash detects content changes
+- Template tracking detects template changes
+- Config changes force full rebuild
+
+### Why Single-Level Categories?
+
+**Simpler:**
+- Easier to understand
+- Cleaner URLs
+- Less nesting complexity
+
+**Good enough:**
+- Most sites have 5-10 categories
+- Deep nesting rare
+- Can add full-path later
+
+### Why Jinja2?
+
+**Mature:**
+- Battle-tested
+- Well-documented
+- Large ecosystem
+
+**Features:**
+- Template inheritance
+- Macros/includes
+- Custom filters
+- Autoescaping
+
+**Alternative:**
+Could support multiple template engines via TemplateRenderer interface
+
+### Why TOML Config?
+
+**Readable:**
+- Clean syntax
+- Comments supported
+- No significant whitespace
+
+**Type-safe:**
+- Clear data types
+- Nested structures
+- Arrays and tables
+
+**Alternative:**
+Could support YAML via same Config.from_dict() pattern
+
+---
+
+## Appendix: Glossary
+
+**BuildItem** - Representation of anything the system builds (content, asset, index)
+
+**Processor** - Handler that transforms BuildItems (markdown→HTML, SCSS→CSS)
+
+**Pipeline Stage** - Phase of the build process (discovery, validation, commit)
+
+**BuildContext** - Shared state across pipeline stages and processors
+
+**Services** - Collection of utility objects (cache, templates, output writer)
+
+**Frontmatter** - YAML/TOML metadata at the top of content files
+
+**Permalink** - URL pattern for generated pages
+
+**Category** - Classification from directory structure or frontmatter
+
+**Slug** - URL-safe identifier derived from title or filename
+
+**Incremental Build** - Only rebuild changed items
+
+**Cache** - Persistent storage of previous build state
+
+**Hash** - Content fingerprint for detecting changes
+
+**Template Dependency** - Tracking which templates each item uses
+
+**Validation Phase** - Read-only checking of all items
+
+**Commit Phase** - Write all validated outputs
+
+**Index** - Generated page listing multiple content items (blog index, category page)
