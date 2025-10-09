@@ -8,6 +8,8 @@ body {
 
 pre, code {
     font-family: "Fira Code", "Atkinson Hyperlegible Mono", monospace;
+    border-radius: 4px;
+    padding: 8px; 
 }
 
 .nav > ul {
@@ -81,7 +83,24 @@ code { background: none; }
 @media only screen and (min-width: 1200px) {
   body {
     font-size: 20px;
-    max-width: 75%;
+    max-width: 1024px;
+  }
+
+  p {
+    line-height: 1.6;
   }
 }
+
+/* HiDPI devices */
+@media only screen and (min-width: 1440px) {
+  body {
+    font-size: 20px;
+    max-width: 1280px;
+  }
+
+  p {
+    line-height: 1.75;
+  }
+}
+
 
