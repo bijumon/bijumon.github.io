@@ -18,6 +18,7 @@ layout: default
   {% assign all_tags = all_tags | concat: post.tags %}
 {% endfor %}
 
+{% comment %}
 {% assign unique_tags = all_tags | uniq %}
 
   <ul>
@@ -27,6 +28,7 @@ layout: default
   </ul>
 </div>
 <hr/>
+{% endcomment %}
 
 {{ content }}
 
