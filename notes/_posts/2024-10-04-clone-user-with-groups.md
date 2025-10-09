@@ -1,7 +1,7 @@
 ---
 title: tips
 date: 2024-10-04 13:00 IST
-tags: frontpage
+tags: [ linux, tips ]
 ---
 
 Create a new user who is a member of the same groups as the current user.
