@@ -1,6 +1,7 @@
 ---
 title: sunday
 date: 2024-09-22 11:54 +0530
+tags: [ linux, tips ]
 ---
 
 ![compiling linux kernel tkg 6.11](/images/kernel-compile-611-202409.png "compiling linux kernel tkg 6.11")
