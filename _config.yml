@@ -18,10 +18,29 @@ permalink: "pretty"
 plugins:
   - jekyll-feed
 
-markdown: CommonMark
-commonmark:
-  options: ["FOOTNOTES"]
-  extensions: ["strikethrough", "autolink", "table"]
+markdown: Commonmarker
+commonmarker:
+  parse:
+    smart: true
+  render:
+    hardbreaks: true
+  extension:
+    header_ids: ""
+    strikethrough: true
+    table: true
+    autolink: true
+    tasklist: true
+    footnotes: true
+    superscript: true
+    subscript: true
+    description_lists: true
+    underline: true
+    spoiler: true
+    shortcodes: true
+    alerts: true
+  plugins:
+    syntax_highlighter: 
+      theme: "base16-ocean.dark"
 
 exclude:
     - archive

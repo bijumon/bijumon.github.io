@@ -1,0 +1,126 @@
+# _config.yml
+# Jekyll Commonmarker Configuration
+
+# Set markdown processor
+markdown: Commonmarker
+
+# Commonmarker options
+commonmarker:
+  # Parse options - control how markdown is parsed
+  parse:
+    smart: true                        # Convert quotes, hyphens to smart punctuation
+    default_info_string: ""            # Default info string for fenced code blocks
+    relaxed_tasklist_matching: false   # Allow any non-space for checked state
+    relaxed_autolinks: false           # Relaxed autolink parsing
+  
+  # Render options - control how HTML is generated
+  render:
+    hardbreaks: true                   # Render \n as <br>
+    github_pre_lang: true              # Use <pre lang="xyz"> for code blocks
+    full_info_string: false            # Include full info string in data-meta
+    width: 80                          # Target line width for rendering
+    unsafe: false                      # Allow raw HTML and unsafe links
+    escape: false                      # Escape raw HTML instead of removing
+    sourcepos: false                   # Include source position attributes
+    escaped_char_spans: true           # Wrap escaped chars in spans
+    ignore_setext: false               # Ignore setext-style headers
+    ignore_empty_links: false          # Ignore links with no destination
+    gfm_quirks: false                  # Enable GFM quirks mode
+    prefer_fenced: false               # Prefer fenced code over indented
+    tasklist_classes: false            # Add CSS classes to tasklist items
+  
+  # Extension options - enable/disable markdown extensions
+  extension:
+    strikethrough: true                # ~~strikethrough~~ support
+    tagfilter: true                    # Filter potentially unsafe HTML tags
+    table: true                        # GitHub-style tables
+    autolink: true                     # Autolink URLs
+    tasklist: true                     # Task list items [x]
+    superscript: false                 # ^superscript^ support
+    header_ids: ""                     # Prefix for header IDs (empty = auto-generate)
+    footnotes: false                   # Footnotes support
+    description_lists: false           # Description list support
+    front_matter_delimiter: ""         # YAML front matter delimiter (e.g., "---")
+    multiline_block_quotes: false      # Multiline block quotes with >>>
+    math_dollars: false                # Math with $ delimiters
+    math_code: false                   # Math in code spans
+    shortcodes: true                   # :emoji: shortcodes
+    wikilinks_title_before_pipe: false # [[title|link]] format
+    wikilinks_title_after_pipe: false  # [[link|title]] format
+    underline: false                   # ++underline++ support
+    spoiler: false                     # ||spoiler|| support
+    greentext: false                   # >greentext support
+    subscript: false                   # ~subscript~ support
+    alerts: false                      # GitHub-style alerts
+  
+  # Plugin configuration
+  plugins:
+    # Syntax highlighter plugin
+    syntax_highlighter:
+      theme: "base16-ocean.dark"       # Theme name or "" for CSS classes
+      # path: "./themes"               # Optional: custom theme directory
+      # OR set to false/nil to disable:
+      # syntax_highlighter: false
+
+
+# ============================================
+# Minimal configuration example
+# ============================================
+# markdown: Commonmarker
+# commonmarker:
+#   parse:
+#     smart: true
+#   extension:
+#     table: true
+#     strikethrough: true
+#     autolink: true
+
+
+# ============================================
+# GitHub Flavored Markdown (default-ish)
+# ============================================
+# markdown: Commonmarker
+# commonmarker:
+#   extension:
+#     strikethrough: true
+#     tagfilter: true
+#     table: true
+#     autolink: true
+#     tasklist: true
+
+
+# ============================================
+# Disable syntax highlighting
+# ============================================
+# markdown: Commonmarker
+# commonmarker:
+#   plugins:
+#     syntax_highlighter: false
+
+
+# ============================================
+# CSS classes for syntax highlighting
+# ============================================
+# markdown: Commonmarker
+# commonmarker:
+#   plugins:
+#     syntax_highlighter:
+#       theme: ""
+
+
+# ============================================
+# Custom syntax highlighting theme
+# ============================================
+# markdown: Commonmarker
+# commonmarker:
+#   plugins:
+#     syntax_highlighter:
+#       theme: "Solarized (dark)"
+#       # Available themes:
+#       # - "base16-ocean.dark"
+#       # - "base16-eighties.dark"
+#       # - "base16-mocha.dark"
+#       # - "base16-ocean.light"
+#       # - "InspiredGitHub"
+#       # - "Solarized (dark)"
+#       # - "Solarized (light)"
