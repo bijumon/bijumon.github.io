@@ -1,0 +1,29 @@
+{% comment %}
+    We use classes instead of IDs and append a unique ID (post slug) 
+    to create unique containers for each post's tag filter.
+{% endcomment %}
+
+{% assign current_item = include.item %}
+{% assign unique_id = current_item.slug | default: current_item.url | slugify %}
+
+{% if current_item.tags != empty %}
+<ul class="tag-buttons-container tag-list" 
+    id="tag-buttons-container-{{ unique_id }}" 
+    role="tablist" 
+    aria-label="Filter Posts by Tag">
+    {% for tag in current_item.tags %}
+        {% assign slugged_tag = tag | slugify %}
+        <li class="tag-button" data-tag="{{ slugged_tag }}" role="tab" tabindex="0">
+            {{ tag | replace: "-", " " | capitalize }}
+        </li>
+    {% endfor %}
+</ul>
+<hr>
+{% endif %}
+
+<div class="posts-list-container" 
+     id="posts-list-container-{{ unique_id }}" 
+     role="region" 
+     aria-live="polite">
+    <h2>Select a tag above to view related posts.</h2>
+</div>

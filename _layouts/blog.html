@@ -40,6 +40,8 @@ layout: default
       <a class="url" href="{{ post.url | relative_url }}">permalink</a>
     </div>
     {{ post.content }}
+    <hr/>
+    {% include tags_filter.html item=post %}
   </article>
   <hr/>
   {% endfor %}

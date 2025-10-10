@@ -1,6 +1,7 @@
 ---
 title: "python exercises from Exercism"
 date: "Fri Aug 22 10:04:16 2025 +0530"
+tags: [ python, exercism, learn ]
 ---
 
 ["Hello, World!"](http://en.wikipedia.org/wiki/%22Hello,_world!%22_program) is the traditional first program for beginning programming in a new language or environment.
