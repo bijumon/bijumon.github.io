@@ -7,10 +7,7 @@
 {% assign unique_id = current_item.slug | default: current_item.url | slugify %}
 
 {% if current_item.tags != empty %}
-<ul class="tag-buttons-container tag-list" 
-    id="tag-buttons-container-{{ unique_id }}" 
-    role="tablist" 
-    aria-label="Filter Posts by Tag">
+<ul class="tag-buttons-container tag-list" id="tag-buttons-container-{{ unique_id }}" role="tablist" aria-label="Filter Posts by Tag">
     {% for tag in current_item.tags %}
         {% assign slugged_tag = tag | slugify %}
         <li class="tag-button" data-tag="{{ slugged_tag }}" role="tab" tabindex="0">
@@ -21,9 +18,4 @@
 <hr>
 {% endif %}
 
-<div class="posts-list-container" 
-     id="posts-list-container-{{ unique_id }}" 
-     role="region" 
-     aria-live="polite">
-    <h2>Select a tag above to view related posts.</h2>
-</div>
+<div class="posts-list-container" id="posts-list-container-{{ unique_id }}" role="region" aria-live="polite"></div>

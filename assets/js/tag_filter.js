@@ -50,7 +50,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const tagButtons = tagButtonsContainer.querySelectorAll('.tag-button');
         
         // Initial Message
-        postsListContainer.innerHTML = '<h2>Select a tag above to view related posts.</h2>';
+        postsListContainer.innerHTML = '';
 
         // Attach event listeners
         tagButtons.forEach(btn => {
@@ -83,7 +83,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (isCurrentlyActive) {
             // Toggling OFF: Clear the results
-            postsListContainer.innerHTML = '<h2>Select a tag above to view related posts.</h2>';
+            postsListContainer.innerHTML = '';
             return; 
         }
 
