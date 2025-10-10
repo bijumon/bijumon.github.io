@@ -1,0 +1,18 @@
+---
+layout: null
+permalink: /tags_data.json
+---
+{
+  {% for tag in site.tags %}
+    "{{ tag[0] | slugify }}": [
+      {% for post in tag[1] %}
+        {
+          "post_id": "{{ post.id | remove: '/' }}",
+          "title": {{ post.title | jsonify }},
+          "slug": "{{ post.slug }}",
+          "url": "{{ post.url | absolute_url }}"
+        }{% unless forloop.last %},{% endunless %}
+      {% endfor %}
+    ]{% unless forloop.last %},{% endunless %}
+  {% endfor %}
+}
