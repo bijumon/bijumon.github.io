@@ -1,7 +1,8 @@
 [ ] add favicons
-[ ] handle light/dark syntax themes
-[ ] css/js/fonts in assets
-[ ] no assets from cdn, local only
+[ ] fix tag_filter styling for light/dark
+[X] handle light/dark syntax themes
+[X] css/js in assets
+[ ] local fonts in assets
 [ ] reoraganize and simplify notes
 [ ] consolidate python notes into a single file
 [ ] consolidate python links
