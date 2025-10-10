@@ -14,6 +14,7 @@ end
 
 # Markdown engine
 gem "commonmarker", "~> 2.4.1"
+gem "rouge"
 
 # -------------------------------------------------------------
 # Platform-specific dependencies

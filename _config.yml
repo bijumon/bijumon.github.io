@@ -38,9 +38,11 @@ commonmarker:
     spoiler: true
     shortcodes: true
     alerts: true
-  plugins:
-    syntax_highlighter: 
-      theme: "base16-ocean.dark"
+  rouge:
+    css_class: 'highlight'
+    line_numbers: false
+    wrap: true
+    guess_lang: true
 
 exclude:
     - archive
