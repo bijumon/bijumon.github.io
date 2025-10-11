@@ -1,6 +1,6 @@
 ---
 title: "python exercises from Exercism"
-date: "Fri Aug 22 10:04:16 2025 +0530"
+date: "Tue Sep 29 19:31:51 2020 +0530"
 tags: [ python, exercism, learn ]
 ---
 

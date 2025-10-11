@@ -1,0 +1,14 @@
+refactor: Refine UI/UX and update post metadata
+
+This commit introduces several UI/UX refinements and updates post metadata for better content presentation.
+
+- **UI/UX Improvements:**
+    - Removed redundant <hr/> separators from various layouts (`_includes/bookmarks.html`, `_includes/tags_filter.html`, `_layouts/blog.html`, `_layouts/page.html`, `_layouts/post.html`) for a cleaner visual flow.
+    - Restyled tag buttons in `assets/css/styles.css` to appear more like links, enhancing the tag filtering component's integration.
+    - Modified `_includes/tags_filter.html` to prepend '#' to tags for improved readability.
+    - Updated `_layouts/blog.html` to conditionally display post excerpts and titles, providing more control over blog post previews.
+
+- **Content & Metadata Updates:**
+    - Removed the 'notes' scope from `_config.yml` defaults.
+    - Adjusted the `date` field in `python/_posts/2025-08-22-exercism-python.md`.
+    - Added `updated` and `show_excerpt` fields to `python/_posts/2025-10-05-design.md` and refined its introductory content.

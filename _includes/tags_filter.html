@@ -11,11 +11,10 @@
     {% for tag in current_item.tags %}
         {% assign slugged_tag = tag | slugify %}
         <li class="tag-button" data-tag="{{ slugged_tag }}" role="tab" tabindex="0">
-            {{ tag | replace: "-", " " | capitalize }}
+            # {{ tag | replace: "-", " " | capitalize }}
         </li>
     {% endfor %}
 </ul>
-<hr>
 {% endif %}
 
 <div class="posts-list-container" id="posts-list-container-{{ unique_id }}" role="region" aria-live="polite"></div>

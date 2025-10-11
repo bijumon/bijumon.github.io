@@ -105,101 +105,55 @@ code { background: none; }
 
 /*
  * --------------------------------
- * CSS for Tag Filtering Component
+ * CSS for Link-Like Tag Buttons
  * --------------------------------
  */
 
 /* Container for the tag buttons (UL) */
-#tag-buttons-container {
-    list-style: none; /* Remove bullet points */
+.tag-buttons-container {
+    list-style: none;
     padding: 0;
-    margin-bottom: 20px;
+    margin: 0 0 20px 0;
     display: flex;
-    flex-wrap: wrap; /* Allow tags to wrap on smaller screens */
-    gap: 10px; /* Spacing between tags */
+    flex-wrap: wrap;
+    gap: 10px; 
 }
 
-/* Individual tag button (LI) */
+/* Individual tag button (LI) - Styled like a link */
 .tag-button {
-    /* Style the LI to look like a button */
-    background-color: #f0f0f0; 
-    border: 1px solid #ccc;
-    color: #333;
-    padding: 8px 15px;
+    /* RESET Button/Block Styles */
+    background-color: transparent; /* No background color */
+    border: none; /* No border */
+    
+    /* LINK-LIKE STYLING */
+    color: #007bff; /* Standard link blue color */
+    
+    /* INTERACTIVITY & TEXT */
     cursor: pointer;
-    border-radius: 5px;
-    transition: all 0.2s ease-in-out;
-    
-    /* Ensure it behaves like a button for accessibility */
-    display: inline-block;
-    user-select: none; 
-    
-    /* Make the text visible and readable */
+    padding: 2px 5px; /* Minimal padding */
+    margin: 0; /* Minimal margin */
     font-size: 0.9em; 
-    white-space: nowrap; /* Prevent tag names from breaking */
+    transition: color 0.1s, text-decoration 0.1s;
+    
+    /* Ensure it acts like a block of text in the flow */
+    display: inline; 
+    user-select: none; 
 }
 
-/* Hover state for buttons */
+/* Hover state: Darken the color and remove underline */
 .tag-button:hover:not(.active) {
-    background-color: #e9e9e9;
-    border-color: #aaa;
-}
-
-/* Focus state for accessibility (keyboard users) */
-.tag-button:focus {
-    outline: 2px solid #007bff; /* Highlight focus ring */
-    outline-offset: 2px;
+    color: #0056b3; /* Darker blue on hover */
+    text-decoration: none; /* Often links remove underline on hover */
 }
 
 /* Active (toggled ON) state */
 .tag-button.active {
-    background-color: #007bff; /* Primary color highlight */
-    border-color: #007bff;
-    color: white;
+    color: #333; /* Darker color to show it's selected/active */
+    background-color: #e9e9e9; /* Light background to highlight selection */
+    text-decoration: none; /* Remove underline when active */
     font-weight: bold;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    padding: 1px 4px; /* Adjust padding to look good with the border */
 }
 
-/* -------------------------------- */
-
-/* Container for the filtered post results */
-#posts-list-container {
-    margin-top: 30px;
-    padding: 20px;
-    border: 1px solid #eee;
-    border-radius: 5px;
-}
-
-/* List of post results (UL inside the container) */
-#posts-list-container ul {
-    list-style-type: none;
-    padding: 0;
-}
-
-/* Individual post result item (LI) */
-#posts-list-container li {
-    margin-bottom: 20px;
-    padding-bottom: 10px;
-    border-bottom: 1px dashed #ddd; /* Subtle separator */
-}
-
-/* Post title link (A) */
-#posts-list-container li a {
-    font-size: 1.2em;
-    font-weight: bold;
-    text-decoration: none;
-    color: #333; /* Dark color for primary text */
-    display: block; /* Make the whole line clickable (or just the text) */
-}
-
-#posts-list-container li a:hover {
-    text-decoration: underline;
-    color: #007bff;
-}
-
-/* Post summary/excerpt (P) */
-.post-summary {
-    color: #666; /* Grey color for secondary text */
-    margin-top: 5px;
-    font-size: 0.9em;
-    line-height: 1.4;
-}
