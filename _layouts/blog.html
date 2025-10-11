@@ -3,14 +3,13 @@ layout: default
 ---
 <div class="nav">
   <ul>
-  {% for page in site.pages %}
+  {% for post in site.pages %}
     {% if page.title %}
     <li><a href="{{ page.url }}">{{ page.title }}</a></li>
     {% endif %}
   {% endfor %}
   </ul>
 </div>
-<hr/>
 
 <div class="nav">
 {% assign all_tags = "" | split: "" %}
@@ -20,14 +19,12 @@ layout: default
 
 {% comment %}
 {% assign unique_tags = all_tags | uniq %}
-
   <ul>
   {% for tag in unique_tags %}
     <li>{{ tag }}</li>
   {% endfor %}
   </ul>
 </div>
-<hr/>
 {% endcomment %}
 
 {{ content }}
@@ -38,11 +35,14 @@ layout: default
     <div class="title"> # 
       <time datetime="{{ post.date | date_to_xmlschema }}" class="datetime">{{ post.date | date_to_string }}</time>
       <a class="url" href="{{ post.url | relative_url }}">permalink</a>
+      <p class="post-title">{{ post.title }}</p>
     </div>
-    {{ post.content }}
-    <hr/>
+    {% if post.show_excerpt %}
+      {{ post.excerpt }}
+    {% else %}
+      {{ post.content }}
+    {% endif %}
     {% include tags_filter.html item=post %}
   </article>
-  <hr/>
   {% endfor %}
 </div>
