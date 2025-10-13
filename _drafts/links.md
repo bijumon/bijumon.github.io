@@ -17,29 +17,7 @@ date: 2024-10-22 01:43 +0530
 
 [miyuchina/mistletoe: A fast, extensible and spec-compliant Markdown parser in pure Python.](https://github.com/miyuchina/mistletoe)
 
----
-[python: how to check if a line is an empty line - Stack Overflow](https://stackoverflow.com/questions/7896495/python-how-to-check-if-a-line-is-an-empty-line)
-
-If you want to ignore lines with only whitespace:
-
-``` python
-if line.strip():
-    ... do something
-```
-
-The empty string is a False value.
-
-Or if you really want only empty lines:
-
-``` python
-if line in ['\n', '\r\n']:
-    ... do  something
-```
----
-
 [Metaphor: ReFantazio - Rock Paper Shotgun](https://www.rockpapershotgun.com/games/metaphor-refantazio)
-
----
 
 [Rabbit Waves](https://rabbitwaves.ca/site/flags_maritime.html)
 
