@@ -1,12 +1,10 @@
 ---
-layout: default
+permalink: "/drafts.html"
 ---
 
-{{ content }}
-
+{% assign drafts = site.posts | where_exp: "p", "p.path contains '_drafts'" %}
 <div class="posts">
-  {% for post in site.posts %}
-  {% unless post.path contains '_drafts' %}
+  {% for post in drafts %}
   <article class="post">
     <div class="title"> # 
       <time datetime="{{ post.date | date_to_xmlschema }}" class="datetime">{{ post.date | date_to_string }}</time>
@@ -20,6 +18,5 @@ layout: default
     {% endif %}
     {% include tags_filter.html item=post %}
   </article>
-  {% endunless %}
   {% endfor %}
 </div>

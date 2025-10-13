@@ -1,0 +1,11 @@
+<div class="nav">
+  <ul>
+  {% for post in site.pages %}
+    {% if page.title %}
+    <li><a href="{{ page.url }}">{{ page.title }}</a></li>
+    {% endif %}
+  {% endfor %}
+    <li><a href="/about.html">About</a></li>
+    <li><a href="/drafts.html">Drafts</a></li>
+  </ul>
+</div>
