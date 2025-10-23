@@ -1,8 +1,8 @@
 <div class="nav">
   <ul>
-  {% for post in site.pages %}
-    {% if page.title %}
-    <li><a href="{{ page.url }}">{{ page.title }}</a></li>
+  {% for site_page in site.pages %}
+    {% if site_page.title %}
+    <li><a href="{{ site_page.url }}">{{ site_page.title }}</a></li>
     {% endif %}
   {% endfor %}
     <li><a href="/about.html">About</a></li>
