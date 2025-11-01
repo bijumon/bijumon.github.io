@@ -1,4 +1,7 @@
-# SSGv3 Design - Core Specification
+# Static Site Generator v3
+## Design - Core Specification
+
+**Updated**: 2025 Oct 31
 
 ## Architecture Overview
 
@@ -10,6 +13,8 @@ SCAN → BUILD → WRITE
 
 **Core principle**: All validation and transformation happens in memory during BUILD. WRITE is a pure commit operation that either completes fully or leaves the previous output untouched.
 
+---
+
 ### Stage Boundaries
 
 | Stage | File Reads | Transformations | File Writes | Failures Allowed |
@@ -19,6 +24,64 @@ SCAN → BUILD → WRITE
 | WRITE | None | None | All outputs | No (atomic commit) |
 
 **Guarantee**: If BUILD completes without errors, WRITE will succeed or leave the system in the previous consistent state.
+
+---
+
+# Component Hierarchy
+
+```
+Static Site Generator
+│
+├── Three-Stage Pipeline
+│   ├── SCAN Stage
+│   ├── BUILD Stage
+│   │   ├── Phase 1: Content Processing
+│   │   └── Phase 2: Index Generation
+│   └── WRITE Stage
+│
+├── Core Data Model
+│   └── BuildItem
+│       ├── ContentItem
+│       ├── AssetItem
+│       └── IndexItem
+│
+├── Metadata System
+│   ├── System Defaults
+│   ├── Path-Derived Metadata
+│   └── Frontmatter Overrides
+│
+├── Content Processing
+│   ├── Slug Normalization
+│   ├── Template Selection
+│   ├── Markdown Transformation
+│   └── Permalink Generation
+│
+├── Cache System
+│   ├── Cache Key Computation
+│   ├── Manifest Management
+│   └── Invalidation Logic
+│
+├── Template System
+│   ├── Template Selection
+│   ├── Dependency Graph
+│   ├── Hash Computation
+│   └── Cycle Detection
+│
+├── Index System
+│   ├── Pagination
+│   ├── Index Cache Keys
+│   └── Rebuild Detection
+│
+├── URL Management
+│   ├── Permalink Templates
+│   ├── URL Normalization
+│   └── Collision Detection
+│
+└── Atomic Write System
+    ├── Symlink-Based Swap
+    ├── Timestamped Directories
+    └── Orphan Cleanup
+```
 
 ---
 
