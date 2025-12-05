@@ -1,6 +1,9 @@
 ---
-title: "links"
 date: 2024-10-22 01:43 +0530
+description: |
+  This is a longer description.
+  It has multiple lines.
+  Line breaks are preserved as-is.
 ---
 
 [Asianometry & Dylan Patel – How the Semiconductor Industry Actually Works - YouTube](https://www.youtube.com/watch?v=pE3KKUKXcTM&list=WL&index=11)

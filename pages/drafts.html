@@ -11,8 +11,8 @@ permalink: "/drafts.html"
       <a class="url" href="{{ post.url | relative_url }}">permalink</a>
       <p class="post-title">{{ post.title }}</p>
     </div>
-    {% if post.show_excerpt %}
-      {{ post.excerpt }}
+    {% if post.description %}
+      {{ post.description }}
     {% else %}
       {{ post.content }}
     {% endif %}

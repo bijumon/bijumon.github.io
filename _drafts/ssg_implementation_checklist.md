@@ -1,3 +1,10 @@
+---
+description: |
+  This is a longer description.
+  It has multiple lines.
+  Line breaks are preserved as-is.
+---
+
 # SSGv3 Implementation Checklist - Test-First Approach
 
 ### Testing Strategy
