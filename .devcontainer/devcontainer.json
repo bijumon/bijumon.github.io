@@ -1,30 +1,47 @@
-// For format details, see https://aka.ms/devcontainer.json. For config options, see the
-// README at: https://github.com/devcontainers/templates/tree/main/src/jekyll
+// For format details, see https://aka.ms/devcontainer.json.
+// For config options, see the README at:
+// https://github.com/devcontainers/templates/tree/main/src/jekyll
 {
 	"name": "Jekyll",
-	// Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
-	"image": "mcr.microsoft.com/devcontainers/jekyll:2-bookworm",
-	"features": {},
+
+	// ✅ Use a Dockerfile instead of a raw image so we can install native build deps
+	"build": {
+		"dockerfile": "Dockerfile"
+	},
 
 	// Features to add to the dev container. More info: https://containers.dev/features.
-	// "features": {},
+	"features": {
+		// ✅ Node.js required for modern Jekyll themes and asset pipelines
+		"ghcr.io/devcontainers/features/node:1": {}
+	},
 
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
-	// "forwardPorts": [],
+	// ✅ Default Jekyll server port
+	"forwardPorts": [4000],
 
 	// Uncomment the next line to run commands after the container is created.
-	// "postCreateCommand": "jekyll --version"
+	// ❌ NO LONGER NEEDED — Jekyll & Bundler now install in Dockerfile
+	// "postCreateCommand": "gem install bundler jekyll",
 
 	// Configure tool-specific properties.
-	// "customizations": {},
+	"customizations": {
+		"vscode": {
+			// ✅ Modern Ruby language server (better than old ruby/rails extensions)
+			"extensions": [
+				"Shopify.ruby-lsp"
+			]
+		}
+	},
 
 	// Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
 	// "remoteUser": "root"
-	
+
+	// ✅ SSH agent forwarding for Git operations
 	"mounts": [
 		"source=${localEnv:SSH_AUTH_SOCK},target=/ssh-agent,type=bind,consistency=cached"
 	],
-	
+
+	// ✅ Expose SSH agent path inside the container
 	"remoteEnv": {
 		"SSH_AUTH_SOCK": "/ssh-agent"
 	}
