@@ -13,7 +13,7 @@ group :jekyll_plugins do
 end
 
 # Markdown engine
-gem "commonmarker", "~> 2.4.1"
+gem "commonmarker", "~> 2.6"
 gem "rouge"
 
 # -------------------------------------------------------------
