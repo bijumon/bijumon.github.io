@@ -1,16 +1,19 @@
 # Setup
+
+includes_dir: templates/_includes
+layouts_dir: templates/_layouts
+drafts: content/_drafts
+
 # Specify the author for blog posts
 author:
   name: bijumon
   url: https://bijumon.github.io/about/
   email: me@gee.mail
 
-title: Firehose Weekly
-tagline: fuel for the dev firehose
+title: Notes on Modern Alchemy
+tagline: In Case of Fire, Blame the Build System
 description: >- # this means to ignore newlines until "baseurl:"
-  Write an awesome description for your new site here. You can edit this
-  line in _config.yml. It will appear in your document head meta (for
-  Google search results) and in your feed.xml site description.
+  A quiet collection of technical notes, best approached with curiosity and willingness to say “Ook” when appropriate.
 baseurl: ""
 url: "https://bijumon.github.io"
 permalink: "pretty"
@@ -50,6 +53,7 @@ exclude:
     - todo.md
     - Gemfile
     - Gemfile.lock
+
 
 # frontmatter defaults
 defaults:

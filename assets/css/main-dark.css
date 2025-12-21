@@ -1,0 +1,11 @@
+@media (prefers-color-scheme: dark) {
+	:root {
+		--border-color: var(--gray-3);
+		--background-color: var(--abyssal-blue);
+
+		--text-color: var(--palladian);
+		--text-color-link: var(--oatmeal);
+		--text-color-link-active: var(--burning-flame);
+		--text-color-link-visited: var(--oatmeal);
+	}
+}

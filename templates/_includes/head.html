@@ -1,0 +1,34 @@
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>
+    {% if page.title == "Home" %}
+      {{ site.title }}{% if site.tagline %} &middot; {{ site.tagline }}{% endif %}
+    {% else %}
+      {{ page.title }} &middot; {{ site.title }}
+    {% endif %}
+  </title>
+  
+  <link rel="stylesheet" href="{{ '/assets/css/main.css' | relative_url }}">
+  <link rel="stylesheet" href="{{ '/assets/css/syntax.css' | relative_url }}">
+
+  <!-- Standard favicon -->
+	<link rel="icon" href="{{ '/assets/icons/favicon.ico' | relative_url }}" sizes="any">
+	<!-- Modern browsers (crisp on all DPIs) -->
+	<link rel="icon" href="{{ '/assets/icons/favicon.svg' | relative_url }}" type="image/svg+xml">
+	<!-- High-res Apple touch icon -->
+  <link rel="apple-touch-icon-precomposed" sizes="144x144" href="{{ '/assets/icons/apple-touch-icon-precomposed.png' | relative_url }}">
+	<!-- Optional PNG fallbacks -->
+	<link rel="icon" type="image/png" sizes="16x16" href="{{ '/assets/icons/favicon-16.png' | relative_url }}">
+	<link rel="icon" type="image/png" sizes="32x32" href="{{ '/assets/icons/favicon-32.png' | relative_url }}">
+	<link rel="icon" type="image/png" sizes="128x128" href="{{ '/assets/icons/favicon-128.png' | relative_url }}">
+
+  <!-- Atom feed -->
+  <link rel="alternate" type="application/atom+xml" title="{{ site.title }}" href="{{ 'atom.xml' | relative_url }}">
+  <!-- RSS feed -->
+  <link rel="alternate" type="application/rss+xml" title="{{ site.title }}" href="{{ 'rss.xml' | relative_url }}">
+
+  <!-- show tags per post from json -->
+  <script src="{{ '/assets/js/tag_filter.js' | relative_url }}"></script>
+</head>
