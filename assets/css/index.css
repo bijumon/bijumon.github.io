@@ -1,0 +1,607 @@
+/* Defaults */
+:root {
+	--sans-font: "Fira Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", system-ui, sans-serif;
+	--monospace-font: "Fira Code", Consolas, Menlo, Monaco, Andale Mono WT, Andale Mono, Lucida Console, Lucida Sans Typewriter, DejaVu Sans Mono, Bitstream Vera Sans Mono, Liberation Mono, Nimbus Mono L, Courier New, Courier, monospace;
+	--serif-font: "Apple Garamond", Baskerville, "Times New Roman", "Droid Serif", Times, "Source Serif Pro", serif;
+}
+
+/* Theme colors */
+:root {
+	--red: #E53935;
+	--orange: #FB8C00;
+	--yellow: #FDD835;
+	--green: #43A047;
+	--blue: #1E88E5;
+	--indigo: #5E35B1;
+	--violet: #8E24AA;
+	
+	--warm-orange: #cc6a00;
+	--red-1: #FF0000;
+	--blue-2: #0000EE;
+	--green-3: #00cd00;
+	--purple-4: #551A8B;
+	--electric-blue: #33BBFF;
+	
+	--rain: #cc6a00;
+	--rain: violet;
+	--rain: goldenrod;
+	--rain: indigo;
+	--rain: green;
+	--rain: blue;
+	
+	--rain: #F8F8F2;
+	--rain: #FFB86C;
+	--rain: #BD93F9;
+	--rain: #F1FA8C;
+	--rain: #FF79C6;
+	--rain: #50FA7B;
+	--rain: #8BE9FD;
+
+	--black: #000000;
+	--gray-100: #101010;
+	--gray-200: #212121;
+	--gray-300: #323232;
+	--gray-400: #434343;
+	--gray-500: #545454;
+	--gray-600: #656565;
+	--gray-700: #767676;
+	--gray-800: #878787;
+	--gray-900: #989898;
+	--gray-AAA: #A9A9A9;
+	--gray-BBB: #BABABA;
+	--gray-CCC: #CBCBCB;
+	--gray-DDD: #DCDCDC;
+	--gray-EEE: #EDEDED;
+	--gray-FFF: #FEFEFE;
+	--white: #FFFFFF;
+
+	--border-color: var(--gray-700);
+	--background-color: var(--white);
+	--syntax-tab-size: 2;
+	--text-color: var(--black);
+	--text-color-link: var(--blue-2);
+	--text-color-link-active: var(--text-color-link);
+	--text-color-link-visited: var(--text-color-link);
+}
+
+@media (prefers-color-scheme: dark) {
+	:root {
+		--border-color: var(--gray-300);
+		--background-color: var(--gray-100);
+
+		--text-color: var(--white);
+		--text-color-link: var(--electric-blue);
+		--text-color-link-active: var(--text-color-link);
+		--text-color-link-visited: var(--text-color-link);
+	}
+}
+
+
+/* Global stylesheet */
+* {
+	box-sizing: border-box;
+}
+
+@view-transition {
+	navigation: auto;
+}
+
+html,
+body {
+	padding: 0;
+	margin: 0 auto;
+	font-family: var(--sans-font);
+	color: var(--text-color);
+	background-color: var(--background-color);
+}
+
+html {
+	overflow-y: scroll;
+}
+
+/* https://www.a11yproject.com/posts/how-to-hide-content/ */
+.visually-hidden:not(:focus):not(:active) {
+	clip: rect(0 0 0 0);
+	clip-path: inset(50%);
+	height: 1px;
+	overflow: hidden;
+	position: absolute;
+	white-space: nowrap;
+	width: 1px;
+}
+
+/* Fluid images via https://www.zachleat.com/web/fluid-images/ */
+img {
+	max-width: 100%;
+}
+
+img[width][height] {
+	height: auto;
+}
+
+img[src$=".svg"] {
+	width: 100%;
+	height: auto;
+	max-width: none;
+}
+
+video,
+iframe {
+	width: 100%;
+	height: auto;
+}
+
+iframe {
+	aspect-ratio: 16/9;
+}
+
+p:last-child {
+	margin-bottom: 0;
+}
+
+p {
+	line-height: 1.5;
+}
+
+li {
+	line-height: 1.5;
+}
+
+a[href] {
+	color: var(--text-color-link);
+	text-decoration: none;
+}
+
+a[href]:visited {
+	color: var(--text-color-link-visited);
+}
+
+a[href]:hover,
+a[href]:active {
+	color: var(--text-color-link-active);
+	text-decoration: underline;
+}
+
+main,
+footer {
+	padding: 1rem;
+}
+
+main :first-child {
+	margin-top: 0;
+}
+
+header {
+	border-bottom: 1px dashed var(--gray-500);
+}
+
+#skip-link {
+	text-decoration: none;
+	background: var(--background-color);
+	color: var(--text-color);
+	padding: 0.5rem 1rem;
+	border: 1px solid var(--gray-500);
+	border-radius: 2px;
+}
+
+/* Prevent visually-hidden skip link fom pushing content around when focused */
+#skip-link.visually-hidden:focus {
+	position: absolute;
+	top: 1rem;
+	left: 1rem;
+	/* Ensure it is positioned on top of everything else when it is shown */
+	z-index: 999;
+}
+
+.links-nextprev {
+	display: flex;
+	justify-content: space-between;
+	gap: .5em 1em;
+	list-style: "";
+	border-top: 1px dashed var(--gray-200);
+	padding: 1em 0;
+}
+
+.links-nextprev>* {
+	flex-grow: 1;
+}
+
+.links-nextprev-next {
+	text-align: right;
+}
+
+table {
+	margin: 1em 0;
+}
+
+table td,
+table th {
+	padding-right: 1em;
+}
+
+pre,
+code {
+	font-family: var(--monospace-font);
+}
+
+pre:not([class*="language-"]) {
+	margin: .5em 0;
+	line-height: 1.375;
+	/* 22px /16 */
+	-moz-tab-size: var(--syntax-tab-size);
+	-o-tab-size: var(--syntax-tab-size);
+	tab-size: var(--syntax-tab-size);
+	-webkit-hyphens: none;
+	-ms-hyphens: none;
+	hyphens: none;
+	direction: ltr;
+	text-align: left;
+	white-space: pre;
+	word-spacing: normal;
+	word-break: normal;
+	overflow-x: auto;
+}
+
+code {
+	word-break: break-all;
+}
+
+/* Header */
+header {
+	display: flex;
+	gap: 1em;
+	flex-wrap: wrap;
+	justify-content: space-between;
+	align-items: center;
+	padding: 1em;
+}
+
+.home-link {
+	flex-grow: 1;
+	font-size: 1em;
+	/* 16px /16 */
+	font-weight: 700;
+}
+
+.home-link:link:not(:hover) {
+	text-decoration: none;
+}
+
+/* Nav */
+.nav {
+	display: flex;
+	gap: .5em 1em;
+	padding: 0;
+	margin: 0;
+	list-style: none;
+}
+
+.nav-item {
+	display: inline-block;
+}
+
+.nav-item a[href]:not(:hover) {
+	text-decoration: none;
+}
+
+.nav a[href][aria-current="page"] {
+	text-decoration: underline;
+}
+
+/* Posts list */
+.postlist {
+	counter-reset: start-from var(--postlist-index);
+	list-style: none;
+	padding: 0;
+}
+
+.postlist-item {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	counter-increment: start-from -1;
+	margin-bottom: 1em;
+}
+
+/* .postlist-item:before, */
+.postlist-date {
+	font-size: 0.8125em;
+	/* 13px /16 */
+	font-weight: bolder;
+	color: var(--gray-200);
+}
+
+.postlist-date {
+	word-spacing: -0.5px;
+}
+
+.postlist-link {
+	font-size: 1.1875em;
+	/* 19px /16 */
+	font-weight: 700;
+	flex-basis: calc(100% - 1.5rem);
+	padding-right: .5em;
+	text-underline-position: from-font;
+	text-underline-offset: 0;
+	text-decoration-thickness: 1px;
+}
+
+.postlist-item-active .postlist-link {
+	font-weight: bold;
+}
+
+/* Tags */
+.post-tag {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	text-transform: capitalize;
+	font-style: italic;
+}
+
+.postlist-item>.post-tag {
+	align-self: center;
+}
+
+/* Tags list */
+.post-metadata {
+	display: inline-flex;
+	flex-wrap: wrap;
+	gap: .5em;
+	list-style: none;
+	padding: 0;
+	margin: 0;
+}
+
+.post-metadata time {
+	margin-right: 1em;
+}
+
+/* Base (mobile–tablet) */
+html {
+	font-size: 110%;
+	/* 16px */
+	line-height: 1.5;
+}
+
+/* ≥ 800px */
+@media (min-width: 800px) {
+	html {
+		font-size: 120%;
+		/* ~16.8px */
+		line-height: 1.55;
+	}
+
+	body {
+		max-width: 40em;
+	}
+}
+
+/* ≥ 960px */
+@media (min-width: 960px) {
+	html {
+		font-size: 130%;
+		/* ~17.6px */
+		line-height: 1.6;
+	}
+
+	body {
+		max-width: 43em;
+	}
+}
+
+/* ≥ 1280px */
+@media (min-width: 1280px) {
+	html {
+		font-size: 140%;
+		/* ~18.4px */
+		line-height: 1.65;
+	}
+
+	body {
+		max-width: 47em;
+	}
+}
+
+/* ≥ 1440px */
+@media (min-width: 1440px) {
+	html {
+		font-size: 150%;
+		/* ~19.2px */
+		line-height: 1.7;
+	}
+
+	body {
+		max-width: 50em;
+	}
+}
+
+/* ≥ 1920px (2K) */
+@media (min-width: 1920px) {
+	html {
+		font-size: 160%;
+		/* 20px */
+		line-height: 1.75;
+	}
+
+	body {
+		max-width: 53.5em;
+	}
+}
+
+/* ≥ 2560px (3K) */
+@media (min-width: 2560px) {
+	html {
+		font-size: 170%;
+		/* ~20.8px */
+		line-height: 1.8;
+	}
+
+	body {
+		max-width: 55em;
+	}
+}
+
+/* ≥ 3840px (4K) */
+@media (min-width: 3840px) {
+	html {
+		font-size: 180%;
+		/* ~22.4px */
+		line-height: 1.85;
+	}
+
+	body {
+		max-width: 60em;
+	}
+}
+
+hr {
+	border: 0;
+	height: 0;
+	border-top: 1px solid var(--gray-900);
+	border-bottom: 1px solid var(--gray-700);
+}
+
+pre,
+code {
+	white-space: pre-wrap !important;
+	/* Standard CSS 2.1+ */
+	word-wrap: break-word !important;
+	/* IE-specific, now an alias for overflow-wrap */
+	overflow-wrap: break-word !important;
+	/* Standard CSS3 */
+	overflow-x: auto !important;
+	/* Adds horizontal scrollbar if needed */
+}
+
+pre[class*="language-"] {
+	font-family: var(--monospace-font) !important;
+	border: 1px solid var(--border-color);
+	border-radius: 4px;
+}
+
+pre[class*="language-"] {
+	font-family: var(--monospace-font) !important;
+}
+
+#main picture img {
+	border-radius: 8px;
+	box-shadow: 4px 4px 6px var(--gray-600);
+}
+
+@media (prefers-color-scheme: dark) {
+
+	code[class*="language-"],
+	pre[class*="language-"] {
+		background: #333333;
+	}
+
+	hr {
+		border-top: 1px solid var(--gray-400);
+		border-bottom: 1px solid var(--gray-600);
+	}
+
+	#main picture img {
+		border: 1px solid var(--black);
+		box-shadow: 2px 2px 4px var(--gray-300);
+	}
+}
+
+.post-content {
+	border-bottom: var(--gray-100) 1px solid;
+	margin: 8px 0;
+	padding: 8px 0;
+}
+
+ul.content-list {
+	list-style-type: "\2023";
+	/* ▶ */
+}
+
+ul.content-list li {
+	padding-left: 0.4em;
+	margin-left: -0.4em;
+	margin-bottom: 8px;
+}
+
+.content-list a {
+	display: block;
+	text-decoration: none;
+}
+
+
+/* rainbow cycle for .links a (and :visited) - 7 colours */
+.links a,
+.links a:visited {
+	color: var(--rain);
+	/* resolved per-link by nth-of-type below */
+	text-decoration: none;
+	transition: color .15s ease;
+}
+
+/* assign the 7 rainbow colours using a CSS custom property */
+.links a:nth-of-type(7n+1) {
+	--rain: #44475A;
+}
+
+.links a:nth-of-type(7n+2) {
+	--rain: #cc6a00;
+}
+
+/* darker orange */
+.links a:nth-of-type(7n+3) {
+	--rain: violet;
+}
+
+/* darker violet */
+.links a:nth-of-type(7n+4) {
+	--rain: goldenrod;
+}
+
+/* darker yellow */
+.links a:nth-of-type(7n+5) {
+	--rain: indigo;
+}
+
+.links a:nth-of-type(7n+6) {
+	--rain: green;
+}
+
+.links a:nth-of-type(7n+7) {
+	--rain: blue;
+}
+
+.links a:hover,
+.links a:focus {
+	text-decoration: underline;
+}
+
+@media (prefers-color-scheme: dark) {
+	.links a:nth-of-type(7n + 1) {
+		--rain: #F8F8F2;
+	}
+
+	.links a:nth-of-type(7n + 2) {
+		--rain: #FFB86C;
+	}
+
+	.links a:nth-of-type(7n + 3) {
+		--rain: #BD93F9;
+	}
+
+	.links a:nth-of-type(7n + 4) {
+		--rain: #F1FA8C;
+	}
+
+	.links a:nth-of-type(7n + 5) {
+		--rain: #FF79C6;
+	}
+
+	.links a:nth-of-type(7n + 6) {
+		--rain: #50FA7B;
+	}
+
+	.links a:nth-of-type(7n + 7) {
+		--rain: #8BE9FD;
+	}
+}
