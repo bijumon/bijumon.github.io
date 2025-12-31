@@ -20,7 +20,8 @@ export default function (eleventyConfig) {
   eleventyConfig.addPassthroughCopy({
     "assets/css": "css",
     "assets/js": "js",
-    "assets/img": "img"
+    "assets/img": "img",
+    "assets/fonts": "fonts",
   });
 
 
