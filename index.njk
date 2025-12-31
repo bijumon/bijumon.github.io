@@ -1,0 +1,109 @@
+---
+layout: base.njk
+title: frontpage
+---
+
+<div class="posts">
+  {% for post in collections.all | reverse %} {% if post.data.description %}
+  <div class="post">
+    <h2>
+      <a href="{{ post.url }}">{{ post.data.title }}</a>
+    </h2>
+
+    <p class="description">
+      {{ post.data.description }}
+    </p>
+  </div>
+  {% endif %} {% endfor %}
+</div>
+
+<div id="bookmarks">
+<a href="https://www.11ty.dev/docs/projects/">Eleventy Guide</a>
+<a href="https://kernel.org/">Kernel Archives</a>
+<a href="https://www.fedoraproject.org/">Fedora Linux</a>
+<a href="https://nobaraproject.org/">Nobara Linux</a>
+<a href="https://www.chezmoi.io/user-guide/command-overview/">chezmoi dotfiles</a>
+<a href="https://starship.rs/presets/">Starship shell prompt</a>
+<a href="https://neovim.io/">Neovim</a>
+<a href="https://www.pygame.org/docs/">pygame</a>
+<a href="https://exercism.org/tracks/python">Exercism</a>
+<a href="https://simonwillison.net/">Simon Willison AI</a>
+<a href="https://www.dwarkesh.com/">Dwarkesh Podcast</a>
+<a href="https://tonsky.me/">tonsky.me</a>
+<a href="https://mariozechner.at/">Mario Zechner</a>
+<a href="https://100r.co/">100 Rabbits</a>
+<a href="https://merveilles.town/@neauoire">@neauoire@merveilles.town</a>
+<a href="https://kokorobot.ca/">Kokorobot</a>
+<a href="https://jvns.ca/">Julia Evans</a>
+<a href="https://samwho.dev/">samwho</a>
+<a href="https://lostgarden.com/blog-archive/">Lostgarden</a>
+<a href="https://cgcookie.com/community">CG Cookie</a>
+<a href="https://itch.io/jam/gmtk-2025">GMTK itch.io</a>
+<a href="https://fly.io/blog/">The Fly Blog</a>
+<a href="https://stratechery.com/">Stratechery</a>
+<a href="https://github.com/bBoxType/FiraSans">Fira Sans font</a>
+<a href="https://www.theguardian.com/news/series/the-long-read">The Guardian long read</a>
+<a href="https://www.theguardian.com/news/series/the-audio-long-read">Audio long read</a>
+</div>
+
+<div id="recent">
+{{"
+[Useful patterns for building HTML tools](https://simonwillison.net/2025/Dec/10/html-tools/)
+
+[Inside the rise and fall of Podemos (Spain)](https://www.theguardian.com/world/2025/nov/27/inside-the-rise-and-fall-of-podemos-we-believed-we-had-a-stake-in-the-future) 'We believed we had a stake in the future'
+
+[Everyone in Seattle Hates AI](https://jonready.com/blog/posts/everyone-in-seattle-hates-ai.html) Anyone trying to build anything new in Seattle. Say \"AI\" and people treat you like a threat or an idiot.
+
+[Missing in the Amazon - Guardian podcast](https://www.theguardian.com/technology/audio/2025/jun/05/missing-in-the-amazon-episode-one-the-disappearance-podcast) \"Missing in the Amazon\" by Guardian Latin America correspondent Tom Phillips, dives deep into the 2022 disappearance of his colleague, journalist Dom Phillips and Indigenous defender Bruno Pereira in the remote Javari Valley. It details the specific confrontation between Pereira, the dedicated protector and the poacher known as \"Pelado\"
+
+[Korea Has Surpassed Japan in Per Capita GDP](https://richardkatz.substack.com/p/korea-has-surpassed-japan-in-per)
+
+[Has Google Quietly Solved Two of AI's Oldest Problems?](https://generativehistory.substack.com/p/has-google-quietly-solved-two-of)
+
+[AMD GPUs go brrr · Hazy Research](https://hazyresearch.stanford.edu/blog/2025-11-09-amd-brr)
+
+[Nano Banana can be prompt engineered for extremely nuanced AI image generation \| Max Woolf's Blog](https://minimaxir.com/2025/11/nano-banana-prompts/)
+
+[Work, After Work: Notes From an Unemployed New Grad Watching the Job Market Break \|](https://urlahmed.com/2025/11/05/work-after-work-notes-from-an-unemployed-new-grad-watching-the-job-market-break/) [discussion @ Hacker News](https://news.ycombinator.com/item?id=45870863)
+
+[12 Things I've Heard Boomers Say That I Agree With 100%](https://wildingout.substack.com/p/12-things-ive-heard-boomers-say-that)
+
+[Ilya Sutskever -- We're moving from the age of scaling to the age of research](https://www.dwarkesh.com/p/ilya-sutskever-2)
+
+[Fifty Shades of OOP \| Lesley Lai](https://lesleylai.info/en/fifty_shades_of_oop/)[discussion @ Lobsters](https://lobste.rs/s/fjf1eh/fifty_shades_oop)
+
+[addyosmani/gemini-cli-tips: Gemini CLI Tips and Tricks](https://github.com/addyosmani/gemini-cli-tips)[discussion @ Hacker News](https://news.ycombinator.com/item?id=46060508)
+
+[Game design is simple, actually -- Raph Koster](https://www.raphkoster.com/2025/11/03/game-design-is-simple-actually/)
+
+[Wemino/MadnessPatch](https://github.com/Wemino/MadnessPatch) A patch that fixes various issues in the PC port of Alice: Madness Returns
+
+[Blender 5.0, Whats new?](https://www.blender.org/download/releases/5-0/)
+
+[The trust collapse: Infinite AI content is awful - Arnon Shimoni](https://arnon.dk/the-trust-collapse-infinite-ai-content-is-awful/)
+
+[10 Smart Performance Hacks For Faster Python Code \| The PyCharm Blog](https://blog.jetbrains.com/pycharm/2025/11/10-smart-performance-hacks-for-faster-python-code/)
+
+[Nano Banana can be prompt engineered for extremely nuanced AI image generation \| Max Woolf's Blog](https://minimaxir.com/2025/11/nano-banana-prompts/)
+
+[What if you don't need MCP at all?](https://mariozechner.at/posts/2025-11-02-what-if-you-dont-need-mcp/)
+
+['Nobody believes in the future any more': Adam Curtis and Ari Aster on how to wake up from the post-truth nightmare \| Film \| The Guardian](https://www.theguardian.com/film/2025/aug/08/adam-curtis-ari-aster-eddington-interview-covid-politics)
+
+['It's notoriously hard to write about sex': David Szalay on Flesh, his astounding Booker prize-winner \| David Szalay \| The Guardian](https://www.theguardian.com/books/2025/nov/11/its-notoriously-hard-to-write-about-sex-david-szalay-flesh-booker-prize-winner)
+
+[p-e-w/heretic: Fully automatic censorship removal for language models](https://github.com/p-e-w/heretic)[discussion @ HN](https://news.ycombinator.com/item?id=45945587)
+
+---
+
+> Joshu:  What is the true Way?  
+> Nansen: Every way is the true Way.  
+> Joshu: Can I study it?  
+> Nansen: The more you study, the further from the Way.  
+> Joshu: If I don't study it, how can I know it?  
+> Nansen: The Way does not belong to things seen: nor to things unseen.  
+> It does not belong to things known: nor to things unknown.  
+> Do not seek it, study it, or name it.  
+> To find yourself on it, open yourself as wide as the sky.  
+" | markdown | safe }}
+</div>

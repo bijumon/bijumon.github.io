@@ -1,0 +1,16 @@
+{% extends "base.njk" %}
+{% block content %}
+<article>
+  <small>
+    <a href="{{ page.url }}">{{ site.url }}{{ page.url }}</a>
+    {{ permalink }}
+  </small>
+  <h1>{{ title }}</h1>
+
+  {% if description %}
+  <p class="description">{{ description }}</p>
+  {% endif %}
+
+  {{ content | safe }}
+</article>
+{% endblock %}
