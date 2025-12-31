@@ -1,5 +1,6 @@
 ---
-
+layout: post
+tags: [ "post" ]
 title: "llama.cpp in Docker"
 date: 2025-12-13
 description: build llama.cpp inside a Docker container with AMD ROCm support
@@ -13,8 +14,8 @@ Ive built [llama.cpp]() inside a ROCm enabled container. I used the docker image
 
 We need to set these shell variables:
 
- - `LLAMACPP_ROCM_ARCH` — the AMD GPU architecture to target for optimized binaries, `gfx1101` or `gfx1102` for some RDNA3 cards
- - `HIP_VISIBLE_DEVICES` — which GPU(s) the ROCm runtime should expose to the process inside the container
+- `LLAMACPP_ROCM_ARCH` — the AMD GPU architecture to target for optimized binaries, `gfx1101` or `gfx1102` for some RDNA3 cards
+- `HIP_VISIBLE_DEVICES` — which GPU(s) the ROCm runtime should expose to the process inside the container
 
 We want run the build inside a Dockerfile (below), but let's reproduce the steps manually first.
 
@@ -38,8 +39,8 @@ lets walk through it line by line, focusing on why each flag
 
 - `docker run -it` runs a new container and attaches our terminal to it. We get an interactive prompt inside the container.
 
-    - `-i` keeps STDIN open.
-    - `-t` allocates a pseudo-TTY so you get a normal shell.
+  - `-i` keeps STDIN open.
+  - `-t` allocates a pseudo-TTY so you get a normal shell.
 
 - `--name=llamacpp_build_01` gives the container a usable name, instead of having to use a container-id like 36569e4cb3cd.
 
@@ -47,6 +48,7 @@ lets walk through it line by line, focusing on why each flag
 docker start -ai llamacpp_build_01 # attach and run interactive shell inside container
 docker exec -it llamacpp_build_01 bash 
 ```
+
 - `--privileged` gives container access to the host GPU and other devices
 
 - `--network=host` shares the host’s network stack, for port forwarding etc
@@ -67,7 +69,7 @@ docker exec -it llamacpp_build_01 bash
 
 - `-v $HOME/LLM_MODELS:/data` mounts our model directory into the container
 
-In short, lets launch a privileged, GPU enabled, interactive ROCm development container with access to our AMD GPU and local model files, optimized for building and running large LLM workloads with `llama.cpp` ;D 
+In short, lets launch a privileged, GPU enabled, interactive ROCm development container with access to our AMD GPU and local model files, optimized for building and running large LLM workloads with `llama.cpp` ;D
 
 Once inside the container, we clone `ggml-org/llama.cpp`, enabled HIP and built `llama.cpp` with **-DGGML_HIP=ON**
 
@@ -86,7 +88,6 @@ HIPCXX="$(hipconfig -l)/clang" HIP_PATH="$(hipconfig -R)" \
 cmake -S . -B build -DGGML_HIP=ON -DAMDGPU_TARGETS=$LLAMACPP_ROCM_ARCH -DCMAKE_BUILD_TYPE=Release -DLLAMA_CURL=ON
 cmake --build build --config Release -j$(nproc)
 ```
-
 
 Here is a single-stage Dockerfile that installs deps, sets build args and envs, builds llama.cpp.
 
@@ -196,7 +197,6 @@ case "$1" in
 esac
 ```
 
-
 ## Runnig llama.cpp binaries
 
 We can run the container image directly, using the `--run` argument specified in `entrypoint.sh` and passing to it, llama.cpp arguments like path to GGUF model file.
@@ -214,6 +214,7 @@ docker run -e HIP_VISIBLE_DEVICES=1 ... llamacpp-rocm-dev ...
 Usually, we want a named container that can be started again, from a script like `run-llamacpp.sh`
 
 {% raw %}
+
 ```bash
 #!/usr/bin/env bash
 set -e
@@ -290,6 +291,7 @@ else
     "${FINAL_LLAMA_ARGS[@]}"
 fi
 ```
+
 {% endraw %}
 
 Run it:
