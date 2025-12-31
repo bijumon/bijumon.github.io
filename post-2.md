@@ -1,5 +1,6 @@
 ---
-
+layout: post
+tags: [ "post" ]
 title: Second Post
 date: 2025-01-02
 description: |
