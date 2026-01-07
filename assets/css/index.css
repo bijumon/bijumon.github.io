@@ -1,38 +1,37 @@
-
 /* =========================
    FiraGO – upright
    ========================= */
 
 @font-face {
-  font-family: "FiraGO";
-  src: url("/fonts/FiraGO-Light.woff2") format("woff2");
-  font-weight: 300;
-  font-style: normal;
-  font-display: swap;
+	font-family: "FiraGO";
+	src: url("/fonts/FiraGO-Light.woff2") format("woff2");
+	font-weight: 300;
+	font-style: normal;
+	font-display: swap;
 }
 
 @font-face {
-  font-family: "FiraGO";
-  src: url("/fonts/FiraGO-Regular.woff2") format("woff2");
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
+	font-family: "FiraGO";
+	src: url("/fonts/FiraGO-Regular.woff2") format("woff2");
+	font-weight: 400;
+	font-style: normal;
+	font-display: swap;
 }
 
 @font-face {
-  font-family: "FiraGO";
-  src: url("/fonts/FiraGO-Bold.woff2") format("woff2");
-  font-weight: 700;
-  font-style: normal;
-  font-display: swap;
+	font-family: "FiraGO";
+	src: url("/fonts/FiraGO-Bold.woff2") format("woff2");
+	font-weight: 700;
+	font-style: normal;
+	font-display: swap;
 }
 
 @font-face {
-  font-family: "FiraGO";
-  src: url("/fonts/FiraGO-Heavy.woff2") format("woff2");
-  font-weight: 900;
-  font-style: normal;
-  font-display: swap;
+	font-family: "FiraGO";
+	src: url("/fonts/FiraGO-Heavy.woff2") format("woff2");
+	font-weight: 900;
+	font-style: normal;
+	font-display: swap;
 }
 
 /* =========================
@@ -40,11 +39,11 @@
    ========================= */
 
 @font-face {
-  font-family: "FiraGO";
-  src: url("/fonts/FiraGO-Italic.woff2") format("woff2");
-  font-weight: 400;
-  font-style: italic;
-  font-display: swap;
+	font-family: "FiraGO";
+	src: url("/fonts/FiraGO-Italic.woff2") format("woff2");
+	font-weight: 400;
+	font-style: italic;
+	font-display: swap;
 }
 
 /* =========================
@@ -52,11 +51,11 @@
    ========================= */
 
 @font-face {
-  font-family: "Fira Code VF";
-  src: url("/fonts/FiraCode-VF.woff2") format("woff2");
-  font-weight: 300 700;
-  font-style: normal;
-  font-display: swap;
+	font-family: "Fira Code VF";
+	src: url("/fonts/FiraCode-VF.woff2") format("woff2");
+	font-weight: 300 700;
+	font-style: normal;
+	font-display: swap;
 }
 
 /* Defaults */
@@ -75,21 +74,21 @@
 	--blue: #1E88E5;
 	--indigo: #5E35B1;
 	--violet: #8E24AA;
-	
+
 	--warm-orange: #cc6a00;
 	--red-1: #FF0000;
 	--blue-2: #0000EE;
 	--green-3: #00cd00;
 	--purple-4: #551A8B;
 	--electric-blue: #33BBFF;
-	
+
 	--rain: #cc6a00;
 	--rain: violet;
 	--rain: goldenrod;
 	--rain: indigo;
 	--rain: green;
 	--rain: blue;
-	
+
 	--rain: #F8F8F2;
 	--rain: #FFB86C;
 	--rain: #BD93F9;
@@ -116,7 +115,7 @@
 	--gray-FFF: #FEFEFE;
 	--white: #FFFFFF;
 
-	--border-color: var(--gray-700);
+	--border-color: var(--gray-DDD);
 	--background-color: var(--white);
 	--syntax-tab-size: 2;
 	--text-color: var(--black);
@@ -149,8 +148,6 @@
 
 html,
 body {
-	padding: 0;
-	margin: 0 auto;
 	font-family: var(--sans-font);
 	color: var(--text-color);
 	background-color: var(--background-color);
@@ -196,18 +193,6 @@ iframe {
 	aspect-ratio: 16/9;
 }
 
-p:last-child {
-	margin-bottom: 0;
-}
-
-p {
-	line-height: 1.5;
-}
-
-li {
-	line-height: 1.5;
-}
-
 a[href] {
 	color: var(--text-color-link);
 	text-decoration: none;
@@ -223,52 +208,18 @@ a[href]:active {
 	text-decoration: underline;
 }
 
-main,
-footer {
-	padding: 1rem;
+h1, h2, h3, h4, h5, h6,
+p, li {
+	padding: 0;
+	margin: 0;
 }
 
-main :first-child {
-	margin-top: 0;
+h1 {
+	font-weight: 900;
+	text-transform: capitalize;
 }
-
-header {
-	border-bottom: 1px dashed var(--gray-500);
-}
-
-#skip-link {
-	text-decoration: none;
-	background: var(--background-color);
-	color: var(--text-color);
-	padding: 0.5rem 1rem;
-	border: 1px solid var(--gray-500);
-	border-radius: 2px;
-}
-
-/* Prevent visually-hidden skip link fom pushing content around when focused */
-#skip-link.visually-hidden:focus {
-	position: absolute;
-	top: 1rem;
-	left: 1rem;
-	/* Ensure it is positioned on top of everything else when it is shown */
-	z-index: 999;
-}
-
-.links-nextprev {
-	display: flex;
-	justify-content: space-between;
-	gap: .5em 1em;
-	list-style: "";
-	border-top: 1px dashed var(--gray-200);
-	padding: 1em 0;
-}
-
-.links-nextprev>* {
-	flex-grow: 1;
-}
-
-.links-nextprev-next {
-	text-align: right;
+h1, h2, p {
+	margin-top: 1em;
 }
 
 table {
@@ -307,160 +258,55 @@ code {
 	word-break: break-all;
 }
 
-/* Header */
-header {
-	display: flex;
-	gap: 1em;
-	flex-wrap: wrap;
-	justify-content: space-between;
-	align-items: center;
-	padding: 1em;
-}
-
-.home-link {
-	flex-grow: 1;
-	font-size: 1em;
-	/* 16px /16 */
-	font-weight: 700;
-}
-
-.home-link:link:not(:hover) {
-	text-decoration: none;
-}
-
-/* Nav */
-.nav {
-	display: flex;
-	gap: .5em 1em;
-	padding: 0;
-	margin: 0;
-	list-style: none;
-}
-
-.nav-item {
-	display: inline-block;
-}
-
-.nav-item a[href]:not(:hover) {
-	text-decoration: none;
-}
-
-.nav a[href][aria-current="page"] {
-	text-decoration: underline;
-}
-
-/* Posts list */
-.postlist {
-	counter-reset: start-from var(--postlist-index);
-	list-style: none;
-	padding: 0;
-}
-
-.postlist-item {
-	display: flex;
-	flex-wrap: wrap;
-	align-items: baseline;
-	counter-increment: start-from -1;
-	margin-bottom: 1em;
-}
-
-/* .postlist-item:before, */
-.postlist-date {
-	font-size: 0.8125em;
-	/* 13px /16 */
-	font-weight: bolder;
-	color: var(--gray-200);
-}
-
-.postlist-date {
-	word-spacing: -0.5px;
-}
-
-.postlist-link {
-	font-size: 1.1875em;
-	/* 19px /16 */
-	font-weight: 700;
-	flex-basis: calc(100% - 1.5rem);
-	padding-right: .5em;
-	text-underline-position: from-font;
-	text-underline-offset: 0;
-	text-decoration-thickness: 1px;
-}
-
-.postlist-item-active .postlist-link {
-	font-weight: bold;
-}
-
-/* Tags */
-.post-tag {
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	text-transform: capitalize;
-	font-style: italic;
-}
-
-.postlist-item>.post-tag {
-	align-self: center;
-}
-
-/* Tags list */
-.post-metadata {
-	display: inline-flex;
-	flex-wrap: wrap;
-	gap: .5em;
-	list-style: none;
-	padding: 0;
-	margin: 0;
-}
-
-.post-metadata time {
-	margin-right: 1em;
-}
-
 /* Base (mobile–tablet) */
 html {
-	font-size: 110%;
+	font-size: 100%;
 	/* 16px */
 	line-height: 1.5;
+}
+
+body {
+	margin: 0;
+	padding: 0;
+	width: 100%;
+}
+
+#container {
+	margin: 0 auto;
+	width: 90%;
 }
 
 /* ≥ 800px */
 @media (min-width: 800px) {
 	html {
-		font-size: 120%;
+		font-size: 100%;
 		/* ~16.8px */
-		line-height: 1.55;
-	}
-
-	body {
-		max-width: 40em;
+		line-height: 1.5;
 	}
 }
 
 /* ≥ 960px */
 @media (min-width: 960px) {
 	html {
-		font-size: 130%;
+		font-size: 125%;
 		/* ~17.6px */
-		line-height: 1.6;
+		line-height: 1.5;
 	}
 
-	body {
-		max-width: 43em;
+	#container {
+		max-width: 32em;
 	}
 }
 
 /* ≥ 1280px */
 @media (min-width: 1280px) {
 	html {
-		font-size: 140%;
+		font-size: 137.5%;
 		/* ~18.4px */
-		line-height: 1.65;
+		line-height: 1.5;
 	}
-
-	body {
-		max-width: 47em;
+	#container {
+		max-width: 34em;
 	}
 }
 
@@ -469,50 +315,46 @@ html {
 	html {
 		font-size: 150%;
 		/* ~19.2px */
-		line-height: 1.7;
+		line-height: 1.6;
 	}
-
-	body {
-		max-width: 50em;
+	#container {
+		max-width: 35em;
 	}
 }
 
 /* ≥ 1920px (2K) */
 @media (min-width: 1920px) {
 	html {
-		font-size: 160%;
+		font-size: 175%;
 		/* 20px */
-		line-height: 1.75;
+		line-height: 1.6;
 	}
-
-	body {
-		max-width: 53.5em;
+	#container {
+		max-width: 40em;
 	}
 }
 
 /* ≥ 2560px (3K) */
 @media (min-width: 2560px) {
 	html {
-		font-size: 170%;
+		font-size: 150%;
 		/* ~20.8px */
-		line-height: 1.8;
+		line-height: 1.7;
 	}
-
-	body {
-		max-width: 55em;
+	#container {
+		max-width: 46em;
 	}
 }
 
 /* ≥ 3840px (4K) */
 @media (min-width: 3840px) {
 	html {
-		font-size: 180%;
+		font-size: 175%;
 		/* ~22.4px */
-		line-height: 1.85;
+		line-height: 1.8;
 	}
-
-	body {
-		max-width: 60em;
+	#container {
+		max-width: 48em;
 	}
 }
 
@@ -537,8 +379,6 @@ code {
 
 pre[class*="language-"] {
 	font-family: var(--monospace-font) !important;
-	border: 1px solid var(--border-color);
-	border-radius: 4px;
 }
 
 pre[class*="language-"] {
@@ -568,72 +408,69 @@ pre[class*="language-"] {
 	}
 }
 
-.post-content {
-	border-bottom: var(--gray-100) 1px solid;
-	margin: 8px 0;
-	padding: 8px 0;
+header > h1 > a { color: var(--black) !important; }
+
+header, footer, main,
+.post,
+#bookmarks,
+#recent p {
+	margin-bottom: 1em;
 }
 
-ul.content-list {
-	list-style-type: "\2023";
-	/* ▶ */
+header, main
+.posts, 
+#bookmarks,
+#recent {
+	padding: 1em 0;
+	border-bottom: 1px solid var(--gray-DDD);
 }
 
-ul.content-list li {
-	padding-left: 0.4em;
-	margin-left: -0.4em;
-	margin-bottom: 8px;
-}
+.post h2 { margin-bottom: 0.4em; }
 
-.content-list a {
-	display: block;
-	text-decoration: none;
-}
-
-
-/* rainbow cycle for .links a (and :visited) - 7 colours */
-.links a,
-.links a:visited {
+/* rainbow cycle for #bookmarks a (and :visited) - 7 colours */
+#bookmarks a,
+#bookmarks a:visited {
 	color: var(--rain);
 	/* resolved per-link by nth-of-type below */
 	text-decoration: none;
 	transition: color .15s ease;
 }
 
+
 /* assign the 7 rainbow colours using a CSS custom property */
-.links a:nth-of-type(7n+1) {
+#bookmarks a:nth-of-type(7n+1) {
 	--rain: #44475A;
 }
 
-.links a:nth-of-type(7n+2) {
+#bookmarks a:nth-of-type(7n+2) {
 	--rain: #cc6a00;
 }
 
 /* darker orange */
-.links a:nth-of-type(7n+3) {
+#bookmarks a:nth-of-type(7n+3) {
 	--rain: violet;
 }
 
 /* darker violet */
-.links a:nth-of-type(7n+4) {
+#bookmarks a:nth-of-type(7n+4) {
 	--rain: goldenrod;
 }
 
 /* darker yellow */
-.links a:nth-of-type(7n+5) {
+#bookmarks a:nth-of-type(7n+5) {
 	--rain: indigo;
 }
 
-.links a:nth-of-type(7n+6) {
+#bookmarks a:nth-of-type(7n+6) {
 	--rain: green;
 }
 
-.links a:nth-of-type(7n+7) {
+#bookmarks a:nth-of-type(7n+7) {
 	--rain: blue;
 }
 
-.links a:hover,
-.links a:focus {
+#bookmarks a:hover,
+#bookmarks a:focus {
 	text-decoration: underline;
 }
 
@@ -665,4 +502,12 @@ ul.content-list li {
 	.links a:nth-of-type(7n + 7) {
 		--rain: #8BE9FD;
 	}
+}
+
+#recent p::before {
+	font-family: var(--monospace-font);
+  content: "\21AA"; /* Unicode for &#10551; */
+  color: var(--black)
+  display: inline-block;
+  margin-right: 0.4em;
 }
