@@ -6,18 +6,25 @@ date: 2025-12-13
 description: build llama.cpp inside a Docker container with AMD ROCm support
 ---
 
-Running llama.cpp on AMD GPUs inside Docker with ROCm is fragile by default. Small mismatches between the host driver, ROCm runtime, Ubuntu base image, or HIP toolchain often lead to build failures, missing devices, or binaries that compile but fail at runtime. Docker’s default security model blocks several GPU-related syscalls, so even a “successful” build may fail to detect the GPU or run.
+Lets build llama.cpp inside a Docker container with AMD ROCm + HIP toolchain installed. The result is a container image that can compile optimized HIP binaries for our AMD GPU and run GGUF models with full GPU acceleration. 
 
-Lets build llama.cpp inside a ROCm-enabled Docker container in a way that is repeatable and predictable. The result is a container image that can compile optimized HIP binaries for our AMD GPU, run GGUF models with full GPU acceleration, and behave like a simple command-line tool (--run, --serve, --help) instead of a fragile development environment.
+## Ubuntu container image with ROCm/HIP
 
-Ive built [llama.cpp]() inside a ROCm enabled container. I used the docker image [rocm/dev-ubuntu-24.04:7.0-complete]() because ROCm HIP support and developer tooling (hipcc, hipconfig, runtime libs) are preinstalled on a matching Ubuntu base. Using this image avoids chasing missing system packages or ABI mismatches inside the container.
+ROCm is very sensitive to ABI mismatches between the kernel driver, HIP runtime, and system libraries, which can cause subtle runtime failures even when builds succeed. AMD recommends [Ubuntu](https://rocm.docs.amd.com/projects/install-on-linux/en/latest/install/install-overview.html) because ROCm is built and validated against specific Ubuntu releases, keeping these ABIs aligned and predictable.
 
-We need to set these shell variables:
+I used the docker image [rocm/dev-ubuntu-24.04](https://hub.docker.com/r/rocm/dev-ubuntu-24.04/tags) because ROCm HIP support and developer tooling (hipcc, hipconfig, runtime libs) are preinstalled. Using this image avoids the hunt for missing system packages and subtle ABI mismatches inside the container.
+
+## Preparing the Container for GPU Access
+
+We want run the build using a Dockerfile, but let's reproduce the steps manually first.
+
+Set these shell variables:
 
 - `LLAMACPP_ROCM_ARCH` — the AMD GPU architecture to target for optimized binaries, `gfx1101` or `gfx1102` for some RDNA3 cards
-- `HIP_VISIBLE_DEVICES` — which GPU(s) the ROCm runtime should expose to the process inside the container
+- `HIP_VISIBLE_DEVICES` — which GPU(s) the ROCm runtime should expose to the process inside the container. It takes a comma-separated list of GPU indices.
 
-We want run the build inside a Dockerfile (below), but let's reproduce the steps manually first.
+`HIP_VISIBLE_DEVICES=0` → expose only GPU 0
+`HIP_VISIBLE_DEVICES=0,1` → expose GPUs 0 and 1
 
 ```bash
 docker run -it \
@@ -32,7 +39,7 @@ docker run -it \
   --ipc=host \
   --shm-size 16G \
   -v /home/bj/LLM_MODELS:/data \
-  rocm/dev-ubuntu-24.04:7.0-complete
+  rocm/dev-ubuntu-24.04:latest
 ```
 
 lets walk through it line by line, focusing on why each flag
@@ -44,10 +51,9 @@ lets walk through it line by line, focusing on why each flag
 
 - `--name=llamacpp_build_01` gives the container a usable name, instead of having to use a container-id like 36569e4cb3cd.
 
-```bash
-docker start -ai llamacpp_build_01 # attach and run interactive shell inside container
-docker exec -it llamacpp_build_01 bash 
-```
+`docker start -ai llamacpp_build_01` attach and run interactive shell inside container
+
+`docker exec -it llamacpp_build_01 bash` - start a shell inside an already running container
 
 - `--privileged` gives container access to the host GPU and other devices
 
@@ -69,30 +75,37 @@ docker exec -it llamacpp_build_01 bash
 
 - `-v $HOME/LLM_MODELS:/data` mounts our model directory into the container
 
-In short, lets launch a privileged, GPU enabled, interactive ROCm development container with access to our AMD GPU and local model files, optimized for building and running large LLM workloads with `llama.cpp` ;D
+i.e. launch a privileged, GPU enabled, interactive ROCm development container with access to our AMD GPU and local model files, optimized for building and running large LLM workloads with `llama.cpp`.
 
-Once inside the container, we clone `ggml-org/llama.cpp`, enabled HIP and built `llama.cpp` with **-DGGML_HIP=ON**
+## Updat and build llama.cpp 
+
+1. Install build dependencies
 
 ```bash
-# inside the running container
-# 
-export LLAMACPP_ROCM_ARCH=gfx1101,gfx1102
-
 apt update && apt install -y nano libcurl4-openssl-dev cmake git
+```
 
+2. get llama.cpp source
+
+```bash
 mkdir -p /workspace && cd /workspace
 git clone https://github.com/ggml-org/llama.cpp.git
-cd llama.cpp
+```
 
+3. Set the target GPU architecture and build using CMake with HIP enabled
+
+```bash
+export LLAMACPP_ROCM_ARCH=gfx1101,gfx1102
 HIPCXX="$(hipconfig -l)/clang" HIP_PATH="$(hipconfig -R)" \
 cmake -S . -B build -DGGML_HIP=ON -DAMDGPU_TARGETS=$LLAMACPP_ROCM_ARCH -DCMAKE_BUILD_TYPE=Release -DLLAMA_CURL=ON
+
 cmake --build build --config Release -j$(nproc)
 ```
 
-Here is a single-stage Dockerfile that installs deps, sets build args and envs, builds llama.cpp.
+## Dockerfile: Building llama.cpp with ROCm
 
-```Dockerfile
-FROM rocm/dev-ubuntu-24.04:7.0-complete
+``` dockerfile
+FROM rocm/dev-ubuntu-24.04:latest
 
 ARG LLAMACPP_ROCM_ARCH=gfx1101
 ARG HIP_VISIBLE_DEVICES=0
@@ -128,9 +141,11 @@ ENTRYPOINT ["/entrypoint.sh"]
 CMD ["help"]
 ```
 
+## Making the Container Usable
+
 `entrypoint.sh` is a wrapper that turns the container into a friendly CLI. It interprets `--run`, `--serve` and `--help` and dispatches to llama-cli or llama-server. We can use the container like a command-line tool instead of manually invoking binaries.
 
-``` bash
+``` shell
 #!/usr/bin/env bash
 set -euo pipefail
 
@@ -143,7 +158,7 @@ llama.cpp ROCm container
 
 Usage:
   --run     Run llama-cli (default)
-  --serve   Run llama-server
+  --serve   Run llama-serverx`
   --help    Show this help
 
 Examples:
@@ -197,108 +212,62 @@ case "$1" in
 esac
 ```
 
-## Runnig llama.cpp binaries
+## Docker Compose: Running the ROCm Container
 
-We can run the container image directly, using the `--run` argument specified in `entrypoint.sh` and passing to it, llama.cpp arguments like path to GGUF model file.
+``` yaml
+version: "3.9"
 
-```bash
-docker run -it --privileged --network=host --device=/dev/kfd --device=/dev/dri --group-add video --cap-add=SYS_PTRACE --security-opt seccomp=unconfined --ipc=host --shm-size 16G -v "$MODEL_PATH:/data" llamacpp-rocm-dev --run -n 512 --n-gpu-layers 999 -m /data/deepseek-r1.gguf
+services:
+  llamacpp-rocm:
+    container_name: llamacpp_build_01
+    image: rocm/dev-ubuntu-24.04:latest
+    tty: true
+    stdin_open: true
+
+    privileged: true
+    network_mode: host
+
+    devices:
+      - /dev/kfd
+      - /dev/dri
+
+    group_add:
+      - video
+
+    cap_add:
+      - SYS_PTRACE
+
+    security_opt:
+      - seccomp=unconfined
+
+    ipc: host
+    shm_size: 16g
+
+    volumes:
+      - /home/bj/LLM_MODELS:/data
 ```
 
-We can override runtime envs at `docker run` time:
+## Run the cli
 
-```bash
-docker run -e HIP_VISIBLE_DEVICES=1 ... llamacpp-rocm-dev ...
+``` shell
+docker compose run --rm llamacpp-rocm \
+  --run -m /data/model.gguf -p "Hello"
 ```
 
-Usually, we want a named container that can be started again, from a script like `run-llamacpp.sh`
+## Run the server
 
-{% raw %}
-
-```bash
-#!/usr/bin/env bash
-set -e
-
-IMAGE="llamacpp-rocm-dev"
-CONTAINER_NAME="llamacpp-rocm-dev_01"
-MODEL_PATH="${MODEL_PATH:-$HOME/LLM_MODELS}"
-
-DOCKER_ARGS=(
-  --privileged
-  --network=host
-  --device=/dev/kfd
-  --device=/dev/dri
-  --group-add video
-  --cap-add=SYS_PTRACE
-  --security-opt seccomp=unconfined
-  --ipc=host
-  --shm-size 16G
-  -v "$MODEL_PATH:/data"
-)
-
-LLAMACPP_ARGS=(
-  -n 512
-  --n-gpu-layers 999
-)
-
-usage() {
-  cat <<EOF
-Usage:
-  $0 run   [llama.cpp args...]
-  $0 serve [llama.cpp args...]
-
-Examples:
-  $0 run   -m /data/model.gguf -p "Hello"
-  $0 serve -m /data/model.gguf --port 8080
-
-Defaults:
-  llama.cpp args: ${LLAMACPP_ARGS[*]}
-EOF
-}
-
-MODE="${1:-help}"
-
-case "$MODE" in
-  run|serve)
-    shift
-    ;;
-  help|--help|-h|"")
-    usage
-    exit 0
-    ;;
-  *)
-    echo "error: first argument must be 'run' or 'serve'"
-    usage
-    exit 1
-    ;;
-esac
-
-FINAL_LLAMA_ARGS=(
-  "${LLAMACPP_ARGS[@]}"
-  "$@"
-)
-
-if docker ps -a --format '{{.Names}}' | grep -qx "$CONTAINER_NAME"; then
-  echo "Starting existing container: $CONTAINER_NAME"
-  docker start -ai "$CONTAINER_NAME"
-else
-  echo "Creating and running container: $CONTAINER_NAME"
-  docker run -it \
-    --name "$CONTAINER_NAME" \
-    "${DOCKER_ARGS[@]}" \
-    "$IMAGE" \
-    --"$MODE" \
-    "${FINAL_LLAMA_ARGS[@]}"
-fi
+``` shell
+docker compose run --rm llamacpp \
+  --serve -m /data/model.gguf --port 8080
 ```
+Here are **concise, technical “Notes / Caveats”** you can drop in without expanding the scope of the article:
 
-{% endraw %}
+## Caveats
 
-Run it:
+- ROCm is sensitive to ABI mismatches, host kernel driver, ROCm version and Ubuntu image must remain aligned.
+- `LLAMACPP_ROCM_ARCH` must match the GPU architecture, or else HIP kernels may compile but fail or underperform.
+- `HIP_VISIBLE_DEVICES` only controls GPU visibility inside the process. it does not replace proper device mounts.
+- Large models place heavy pressure on shared memory. If /dev/shm is too small, inference may fail silently or run with severe and confusing performance degradation.
+- `--privileged` simplifies ROCm usage but broadens the security surface, avoid on untrusted hosts.
 
-```bash
-chmod +x run-llamacpp.sh
-./run-llamacpp.sh run -m /data/deepseek-r1.gguf -p "Explain ROCm, briefly"
-./run-llamacpp.sh run -m /data/deepseek-r1.gguf --ctx-size 4096 --batch-size 512
-./run-llamacpp.sh serve -m /data/tinyllama.gguf --host 0.0.0.0 --port 8080
-```
+
