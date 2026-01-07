@@ -7,7 +7,8 @@ export default function (eleventyConfig) {
   eleventyConfig.addGlobalData("site", {
     name: "Minimal Eleventy Blog",
     description: "A barebones Eleventy 3 blog with no extras",
-    url: "https://bijumon.github.io"
+    url: "https://bijumon.github.io",
+    author: "bijumon"
   });
   // Set the current date
   eleventyConfig.addGlobalData("now", () => new Date());
@@ -22,7 +23,10 @@ export default function (eleventyConfig) {
     "assets/js": "js",
     "assets/img": "img",
     "assets/fonts": "fonts",
+    "images": "images",
   });
+
+  eleventyConfig.addWatchTarget("assets/css/*.css");
 
 
   eleventyConfig.addShortcode("currentBuildDate", () => {
