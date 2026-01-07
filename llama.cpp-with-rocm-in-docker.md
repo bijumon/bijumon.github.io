@@ -5,6 +5,7 @@ title: "llama.cpp in Docker"
 date: 2025-12-13
 description: build llama.cpp inside a Docker container with AMD ROCm support
 ---
+![](/images/llamacpp-docker-rocm.png)
 
 Running llama.cpp on AMD GPUs inside Docker with ROCm is fragile by default. Small mismatches between the host driver, ROCm runtime, Ubuntu base image, or HIP toolchain often lead to build failures, missing devices, or binaries that compile but fail at runtime. Docker’s default security model blocks several GPU-related syscalls, so even a “successful” build may fail to detect the GPU or run.
 
@@ -91,7 +92,7 @@ cmake --build build --config Release -j$(nproc)
 
 Here is a single-stage Dockerfile that installs deps, sets build args and envs, builds llama.cpp.
 
-```Dockerfile
+``` dockerfile
 FROM rocm/dev-ubuntu-24.04:7.0-complete
 
 ARG LLAMACPP_ROCM_ARCH=gfx1101
@@ -197,7 +198,7 @@ case "$1" in
 esac
 ```
 
-## Runnig llama.cpp binaries
+## Running llama.cpp binaries
 
 We can run the container image directly, using the `--run` argument specified in `entrypoint.sh` and passing to it, llama.cpp arguments like path to GGUF model file.
 
