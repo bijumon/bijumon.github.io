@@ -1,8 +1,8 @@
 {% extends "base.njk" %}
 {% block content %}
-<article>
+<article class="posts post">
   <small>
-    <a href="{{ page.url }}">{{ site.url }}{{ page.url }}</a>
+    <small>permalink: </small><a href="{{ page.url }}">{{ site.url }}{{ page.url }}</a>
     {{ permalink }}
   </small>
   <h1>{{ title }}</h1>
