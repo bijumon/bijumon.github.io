@@ -35,21 +35,21 @@
 		<link rel="apple-touch-icon" href="/img/favicons/apple-touch-icon-180x180.png">
 </head>
 <body>
+	<div id="container">
+	<header>
+		<h1><a href="{{ site.url }}">{{ site.name }}</a></h1>
+		<p>{{ site.description }}</p>
+	</header>
 
-  <header>
-    <h1><a href="/">{{ site.name }}</a></h1>
-    <p>{{ site.description }}</p>
-  </header>
+	<main>
+		{% block content %}
+		{{ content | safe }}
+		{% endblock %}
+	</main>
 
-  <main>
-	{% block content %}
-    {{ content | safe }}
-	{% endblock %}
-  </main>
-
-  <footer>
-    <p>© {{ now | date() }}</p>
-  </footer>
-
+	<footer>
+		<p>© 2020 - {{ now | date("yyyy") }} {{ site.author }}</p>
+	</footer>
+	</div>
 </body>
 </html>
