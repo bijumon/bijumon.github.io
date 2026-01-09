@@ -5,8 +5,8 @@ export default function (eleventyConfig) {
 
   // ---- site metadata ----
   eleventyConfig.addGlobalData("site", {
-    name: "Minimal Eleventy Blog",
-    description: "A barebones Eleventy 3 blog with no extras",
+    name: "Notes",
+    description: "tech notes from bijumon @github",
     url: "https://bijumon.github.io",
     author: "bijumon"
   });
