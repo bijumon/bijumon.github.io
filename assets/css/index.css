@@ -1,5 +1,5 @@
 /* =========================
-   FiraGO – upright
+   FiraGO 
    ========================= */
 
 @font-face {
@@ -34,10 +34,6 @@
 	font-display: swap;
 }
 
-/* =========================
-   FiraGO – italic
-   ========================= */
-
 @font-face {
 	font-family: "FiraGO";
 	src: url("/fonts/FiraGO-Italic.woff2") format("woff2");
@@ -45,10 +41,6 @@
 	font-style: italic;
 	font-display: swap;
 }
-
-/* =========================
-   Fira Code – variable
-   ========================= */
 
 @font-face {
 	font-family: "Fira Code VF";
@@ -208,17 +200,27 @@ a[href]:active {
 	text-decoration: underline;
 }
 
-h1, h2, h3, h4, h5, h6,
-p, li {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p,
+li {
 	padding: 0;
 	margin: 0;
 }
 
-h1 {
+h1,
+.logo {
 	font-weight: 900;
 	text-transform: capitalize;
 }
-h1, h2, p {
+
+h1,
+h2,
+p {
 	margin-top: 1em;
 }
 
@@ -258,7 +260,10 @@ code {
 	word-break: break-all;
 }
 
-/* Base (mobile–tablet) */
+/* 
+	Media queries
+	Base (mobile–tablet) 
+*/
 html {
 	font-size: 100%;
 	/* 16px */
@@ -305,6 +310,7 @@ body {
 		/* ~18.4px */
 		line-height: 1.5;
 	}
+
 	#container {
 		max-width: 34em;
 	}
@@ -317,6 +323,7 @@ body {
 		/* ~19.2px */
 		line-height: 1.6;
 	}
+
 	#container {
 		max-width: 35em;
 	}
@@ -329,6 +336,7 @@ body {
 		/* 20px */
 		line-height: 1.6;
 	}
+
 	#container {
 		max-width: 40em;
 	}
@@ -341,6 +349,7 @@ body {
 		/* ~20.8px */
 		line-height: 1.7;
 	}
+
 	#container {
 		max-width: 46em;
 	}
@@ -353,6 +362,7 @@ body {
 		/* ~22.4px */
 		line-height: 1.8;
 	}
+
 	#container {
 		max-width: 48em;
 	}
@@ -408,24 +418,67 @@ pre[class*="language-"] {
 	}
 }
 
-header > h1 > a { color: var(--black) !important; }
+.navbar {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	flex-wrap: wrap;
+}
 
-header, footer, main,
+.logo {
+	font-size: 2rem;
+}
+
+.nav-links {
+	display: flex;
+	gap: 1rem;
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+.nav-links a {
+	text-decoration: none;
+	color: #333;
+	font-size: 1.1rem;
+}
+
+.nav-links a:hover {}
+
+/* Mobile: Stack links below logo */
+@media (max-width: 800px) {
+	.navbar {
+		justify-content: center;
+		gap: 1rem;
+	}
+
+	.nav-links {
+		width: 100%;
+		justify-content: center;
+		gap: 1.5rem;
+	}
+}
+
+footer,
+main,
+.navbar,
 .post,
 #bookmarks,
 #recent p {
 	margin-bottom: 1em;
 }
 
-header, main
-.posts, 
+.navbar,
+main .posts,
 #bookmarks,
 #recent {
 	padding: 1em 0;
 	border-bottom: 1px solid var(--gray-DDD);
 }
 
-.post h2 { margin-bottom: 0.4em; }
+.post h2 {
+	margin-bottom: 0.4em;
+}
 
 /* rainbow cycle for #bookmarks a (and :visited) - 7 colours */
 #bookmarks a,
@@ -506,8 +559,8 @@ header, main
 
 #recent p::before {
 	font-family: var(--monospace-font);
-  content: "\21AA"; /* Unicode for &#10551; */
-  color: var(--black)
-  display: inline-block;
-  margin-right: 0.4em;
+	content: "\21AA";
+	/* Unicode for &#10551; */
+	color: var(--black) display: inline-block;
+	margin-right: 0.4em;
 }

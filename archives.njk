@@ -1,0 +1,20 @@
+---
+layout: base.njk
+title: frontpage
+---
+{% set posts = collections.posts | reverse %}
+{% set currentYear = "" %}
+
+<div class="posts">
+{% for item in posts %}
+  {% set year = item.date | date("yyyy") %}
+  {% if year != currentYear %}
+    {% set currentYear = year %}
+    <h2 class="year">{{ currentYear }}</h2>
+  {% endif %}
+  <div class="post">
+    <a href="{{ item.url }}">{{ item.data.title or item.fileSlug }}</a>
+    <p class="description">{{ item.data.description }}</p>
+  </div>
+{% endfor %}
+</div>
