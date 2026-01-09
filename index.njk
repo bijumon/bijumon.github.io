@@ -6,47 +6,48 @@ title: frontpage
 <div class="posts">
   {% for post in collections.all | reverse %} {% if post.data.description %}
   <div class="post">
-    <h2>
-      <a href="{{ post.url }}">{{ post.data.title }}</a>
-    </h2>
-
-    <p class="description">
-      {{ post.data.description }}
-    </p>
+    <h2><a href="{{ post.url }}">{{ post.data.title }}</a></h2>
+    <p class="description">{{ post.data.description }}</p>
   </div>
   {% endif %} {% endfor %}
 </div>
 
 <div id="bookmarks">
-<a href="https://www.11ty.dev/docs/projects/">Eleventy Guide</a>
-<a href="https://kernel.org/">Kernel Archives</a>
-<a href="https://www.fedoraproject.org/">Fedora Linux</a>
-<a href="https://nobaraproject.org/">Nobara Linux</a>
-<a href="https://www.chezmoi.io/user-guide/command-overview/">chezmoi dotfiles</a>
-<a href="https://starship.rs/presets/">Starship shell prompt</a>
-<a href="https://neovim.io/">Neovim</a>
-<a href="https://www.pygame.org/docs/">pygame</a>
-<a href="https://exercism.org/tracks/python">Exercism</a>
-<a href="https://simonwillison.net/">Simon Willison AI</a>
-<a href="https://www.dwarkesh.com/">Dwarkesh Podcast</a>
-<a href="https://tonsky.me/">tonsky.me</a>
-<a href="https://mariozechner.at/">Mario Zechner</a>
-<a href="https://100r.co/">100 Rabbits</a>
-<a href="https://merveilles.town/@neauoire">@neauoire@merveilles.town</a>
-<a href="https://kokorobot.ca/">Kokorobot</a>
-<a href="https://jvns.ca/">Julia Evans</a>
-<a href="https://samwho.dev/">samwho</a>
-<a href="https://lostgarden.com/blog-archive/">Lostgarden</a>
-<a href="https://cgcookie.com/community">CG Cookie</a>
-<a href="https://itch.io/jam/gmtk-2025">GMTK itch.io</a>
-<a href="https://fly.io/blog/">The Fly Blog</a>
-<a href="https://stratechery.com/">Stratechery</a>
-<a href="https://github.com/bBoxType/FiraSans">Fira Sans font</a>
-<a href="https://www.theguardian.com/news/series/the-long-read">The Guardian long read</a>
-<a href="https://www.theguardian.com/news/series/the-audio-long-read">Audio long read</a>
+  <b>bookmarks</b>:
+  <a href="https://github.com/bijumon">bijumon@github</a>
+  <a href="https://github.com/bijumon/bijumon.github.io">{ source-code }</a>
+  <a href="https://mastodon.art/@bijumon">bijumon@mastodon.art</a>
+  <a href="https://x.com/bijupunalor">biju@x.com</a>
+  <a href="https://www.11ty.dev/docs/projects/">Eleventy Guide</a>
+  <a href="https://kernel.org/">Kernel Archives</a>
+  <a href="https://www.fedoraproject.org/">Fedora Linux</a>
+  <a href="https://nobaraproject.org/">Nobara Linux</a>
+  <a href="https://www.chezmoi.io/user-guide/command-overview/">chezmoi dotfiles</a>
+  <a href="https://starship.rs/presets/">Starship shell prompt</a>
+  <a href="https://neovim.io/">Neovim</a>
+  <a href="https://www.pygame.org/docs/">pygame</a>
+  <a href="https://exercism.org/tracks/python">Exercism</a>
+  <a href="https://simonwillison.net/">Simon Willison AI</a>
+  <a href="https://www.dwarkesh.com/">Dwarkesh Podcast</a>
+  <a href="https://tonsky.me/">tonsky.me</a>
+  <a href="https://mariozechner.at/">Mario Zechner</a>
+  <a href="https://100r.co/">100 Rabbits</a>
+  <a href="https://merveilles.town/@neauoire">@neauoire@merveilles.town</a>
+  <a href="https://kokorobot.ca/">Kokorobot</a>
+  <a href="https://jvns.ca/">Julia Evans</a>
+  <a href="https://samwho.dev/">samwho</a>
+  <a href="https://lostgarden.com/blog-archive/">Lostgarden</a>
+  <a href="https://cgcookie.com/community">CG Cookie</a>
+  <a href="https://itch.io/jam/gmtk-2025">GMTK itch.io</a>
+  <a href="https://fly.io/blog/">The Fly Blog</a>
+  <a href="https://stratechery.com/">Stratechery</a>
+  <a href="https://github.com/bBoxType/FiraSans">Fira Sans font</a>
+  <a href="https://www.theguardian.com/news/series/the-long-read">The Guardian long read</a>
+  <a href="https://www.theguardian.com/news/series/the-audio-long-read">Audio long read</a>
 </div>
 
 <div id="recent">
+<b>recently read</b>:
 {{"
 [NETFLIX OPEN CONTENT](https://opencontent.netflix.com/) - initiative from Netflix that shares high-quality test and reference media assets under a Creative Commons license
 
