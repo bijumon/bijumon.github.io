@@ -36,20 +36,23 @@
 </head>
 <body>
 	<div id="container">
-	<header>
-		<h1><a href="{{ site.url }}">{{ site.name }}</a></h1>
-		<p>{{ site.description }}</p>
-	</header>
+		<nav class="navbar">
+			<div class="logo">&#8469; {{ site.name }}</div>
+			<ul class="nav-links">
+				<li><a href="{{ site.url }}">Home</a></li>
+				<li><a href="/archives">Archives</a></li>
+				<li><a href="/atom.xml">Atom</a> / <a href="/rss.xml">RSS</a></li>
+			</ul>
+		</nav>
+		<main>
+			{% block content %}
+			{{ content | safe }}
+			{% endblock %}
+		</main>
 
-	<main>
-		{% block content %}
-		{{ content | safe }}
-		{% endblock %}
-	</main>
-
-	<footer>
-		<p>© 2020 - {{ now | date("yyyy") }} {{ site.author }}</p>
-	</footer>
+		<footer>
+			<p>© 2020 - {{ now | date("yyyy") }} {{ site.author }}</p>
+		</footer>
 	</div>
 </body>
 </html>

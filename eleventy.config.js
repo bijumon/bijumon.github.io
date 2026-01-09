@@ -1,15 +1,18 @@
+import { feedPlugin } from "@11ty/eleventy-plugin-rss";
 import markdownIt from "markdown-it";
 import pluginSyntaxHighlight from "@11ty/eleventy-plugin-syntaxhighlight";
 
 export default function (eleventyConfig) {
 
   // ---- site metadata ----
-  eleventyConfig.addGlobalData("site", {
+  const site = {
     name: "Notes",
     description: "tech notes from bijumon @github",
     url: "https://bijumon.github.io",
     author: "bijumon"
-  });
+  };
+  eleventyConfig.addGlobalData("site", site);
+  
   // Set the current date
   eleventyConfig.addGlobalData("now", () => new Date());
 
@@ -27,6 +30,61 @@ export default function (eleventyConfig) {
   });
 
   eleventyConfig.addWatchTarget("assets/css/*.css");
+
+  eleventyConfig.addCollection("posts", collection =>
+    collection.getAll().filter(item => item.data.layout === "post")
+  );
+
+  const feedMetadata = {
+    language: "en",
+    title: site.name,
+    subtitle: site.description,
+    base: site.url,
+    author: {
+      name: site.author
+    }
+  };
+
+  eleventyConfig.addPlugin(feedPlugin, {
+    type: "atom",
+    outputPath: "/atom.xml",
+    //stylesheet: "pretty-atom-feed.xsl",
+
+    templateData: {
+      eleventyNavigation: {
+        key: "Atom Feed",
+        order: 4
+      }
+    },
+
+    collection: {
+      name: "posts",
+      limit: 10
+    },
+
+    metadata: feedMetadata
+  });
+
+  eleventyConfig.addPlugin(feedPlugin, {
+    type: "rss",
+    outputPath: "/rss.xml",
+
+    templateData: {
+      eleventyNavigation: {
+        key: "RSS Feed",
+        order: 5
+      }
+    },
+
+    collection: {
+      name: "posts",
+      limit: 10
+    },
+
+    metadata: feedMetadata
+  });
+
+
 
 
   eleventyConfig.addShortcode("currentBuildDate", () => {
