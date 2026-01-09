@@ -1,0 +1,73 @@
+name: Eleventy Build & Deploy
+
+on:
+  push:
+    branches: ["main"] # Trigger on push to the 'main' branch
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+
+      - name: Cache Node Modules
+        id: cache-npm
+        uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: ${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-npm-
+
+      - name: Install Dependencies
+        if: steps.cache-npm.outputs.cache-hit != 'true'
+        run: npm ci
+
+      # Cache Eleventy Assets (.cache)
+      - name: Cache Eleventy Assets
+        uses: actions/cache@v4
+        with:
+          # recommended by Eleventy for build speed optimization
+          path: .cache
+          # Key is based on the OS and package-lock.json/eleventy config 
+          # to ensure cache invalidation when dependencies or config change.
+          key: ${{ runner.os }}-eleventy-cache-${{ hashFiles('**/package-lock.json', '.eleventy.js') }}
+          restore-keys: |
+            ${{ runner.os }}-eleventy-cache-
+            
+      - name: Configure GitHub Pages
+        id: pages
+        uses: actions/configure-pages@v5
+
+      - name: Build Eleventy Site
+        # package.json: "build": "npx @11ty/eleventy"
+        run: npm run build
+
+      - name: Upload Pages Artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          # eleventy output directory
+          path: _site 
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
