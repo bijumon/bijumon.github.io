@@ -6,7 +6,7 @@ date: 2025-12-13
 description: build llama.cpp inside a Docker container with AMD ROCm support
 ---
 
-Lets build llama.cpp inside a Docker container with AMD ROCm + HIP toolchain installed. The result is a container image that can compile optimized HIP binaries for our AMD GPU and run GGUF models with full GPU acceleration. 
+Lets build llama.cpp inside a Docker container with AMD ROCm + HIP toolchain installed. The result is a container image that can compile optimized HIP binaries for our AMD GPU and run GGUF models with full GPU acceleration.
 
 ## Ubuntu container image with ROCm/HIP
 
@@ -21,10 +21,11 @@ We want run the build using a Dockerfile, but let's reproduce the steps manually
 Set these shell variables:
 
 - `LLAMACPP_ROCM_ARCH` — the AMD GPU architecture to target for optimized binaries, `gfx1101` or `gfx1102` for some RDNA3 cards
+
 - `HIP_VISIBLE_DEVICES` — which GPU(s) the ROCm runtime should expose to the process inside the container. It takes a comma-separated list of GPU indices.
 
-`HIP_VISIBLE_DEVICES=0` → expose only GPU 0
-`HIP_VISIBLE_DEVICES=0,1` → expose GPUs 0 and 1
+  + `HIP_VISIBLE_DEVICES=0` → expose only GPU 0
+  + `HIP_VISIBLE_DEVICES=0,1` → expose GPUs 0 and 1
 
 ```bash
 docker run -it \
@@ -77,7 +78,7 @@ lets walk through it line by line, focusing on why each flag
 
 i.e. launch a privileged, GPU enabled, interactive ROCm development container with access to our AMD GPU and local model files, optimized for building and running large LLM workloads with `llama.cpp`.
 
-## Update and build llama.cpp 
+## Update and build llama.cpp
 
 1. Install build dependencies
 
@@ -96,8 +97,11 @@ git clone https://github.com/ggml-org/llama.cpp.git
 
 ```bash
 export LLAMACPP_ROCM_ARCH=gfx1101,gfx1102
-HIPCXX="$(hipconfig -l)/clang" HIP_PATH="$(hipconfig -R)" \
-cmake -S . -B build -DGGML_HIP=ON -DAMDGPU_TARGETS=$LLAMACPP_ROCM_ARCH -DCMAKE_BUILD_TYPE=Release -DLLAMA_CURL=ON
+HIPCXX="$(hipconfig -l)/clang" HIP_PATH="$(hipconfig -R)"
+
+cmake -S . -B build -DGGML_HIP=ON \
+-DAMDGPU_TARGETS=$LLAMACPP_ROCM_ARCH \
+-DCMAKE_BUILD_TYPE=Release -DLLAMA_CURL=ON
 
 cmake --build build --config Release -j$(nproc)
 ```
@@ -260,6 +264,7 @@ docker compose run --rm llamacpp-rocm \
 docker compose run --rm llamacpp \
   --serve -m /data/model.gguf --port 8080
 ```
+
 Here are **concise, technical “Notes / Caveats”** you can drop in without expanding the scope of the article:
 
 ## Caveats
@@ -269,5 +274,3 @@ Here are **concise, technical “Notes / Caveats”** you can drop in without ex
 - `HIP_VISIBLE_DEVICES` only controls GPU visibility inside the process. it does not replace proper device mounts.
 - Large models place heavy pressure on shared memory. If /dev/shm is too small, inference may fail silently or run with severe and confusing performance degradation.
 - `--privileged` simplifies ROCm usage but broadens the security surface, avoid on untrusted hosts.
-
-
