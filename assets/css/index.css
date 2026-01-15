@@ -59,35 +59,8 @@
 
 /* Theme colors */
 :root {
-	--red: #E53935;
-	--orange: #FB8C00;
-	--yellow: #FDD835;
-	--green: #43A047;
-	--blue: #1E88E5;
-	--indigo: #5E35B1;
-	--violet: #8E24AA;
-
-	--warm-orange: #cc6a00;
-	--red-1: #FF0000;
 	--blue-2: #0000EE;
-	--green-3: #00cd00;
-	--purple-4: #551A8B;
 	--electric-blue: #33BBFF;
-
-	--rain: #cc6a00;
-	--rain: violet;
-	--rain: goldenrod;
-	--rain: indigo;
-	--rain: green;
-	--rain: blue;
-
-	--rain: #F8F8F2;
-	--rain: #FFB86C;
-	--rain: #BD93F9;
-	--rain: #F1FA8C;
-	--rain: #FF79C6;
-	--rain: #50FA7B;
-	--rain: #8BE9FD;
 
 	--black: #000000;
 	--gray-100: #101010;
@@ -214,6 +187,7 @@ li {
 
 h1,
 .logo {
+	font-family: var(--sans-font);
 	font-weight: 900;
 	text-transform: capitalize;
 }
@@ -480,87 +454,48 @@ main .posts,
 	margin-bottom: 0.4em;
 }
 
-/* rainbow cycle for #bookmarks a (and :visited) - 7 colours */
-#bookmarks a,
-#bookmarks a:visited {
-	color: var(--rain);
-	/* resolved per-link by nth-of-type below */
-	text-decoration: none;
-	transition: color .15s ease;
-}
-
-
-/* assign the 7 rainbow colours using a CSS custom property */
-#bookmarks a:nth-of-type(7n+1) {
-	--rain: #44475A;
-}
-
-#bookmarks a:nth-of-type(7n+2) {
-	--rain: #cc6a00;
-}
-
-/* darker orange */
-#bookmarks a:nth-of-type(7n+3) {
-	--rain: violet;
-}
-
-/* darker violet */
-#bookmarks a:nth-of-type(7n+4) {
-	--rain: goldenrod;
-}
-
-/* darker yellow */
-#bookmarks a:nth-of-type(7n+5) {
-	--rain: indigo;
-}
-
-#bookmarks a:nth-of-type(7n+6) {
-	--rain: green;
-}
-
-#bookmarks a:nth-of-type(7n+7) {
-	--rain: blue;
-}
-
-#bookmarks a:hover,
-#bookmarks a:focus {
-	text-decoration: underline;
-}
-
-@media (prefers-color-scheme: dark) {
-	.links a:nth-of-type(7n + 1) {
-		--rain: #F8F8F2;
-	}
-
-	.links a:nth-of-type(7n + 2) {
-		--rain: #FFB86C;
-	}
-
-	.links a:nth-of-type(7n + 3) {
-		--rain: #BD93F9;
-	}
-
-	.links a:nth-of-type(7n + 4) {
-		--rain: #F1FA8C;
-	}
-
-	.links a:nth-of-type(7n + 5) {
-		--rain: #FF79C6;
-	}
-
-	.links a:nth-of-type(7n + 6) {
-		--rain: #50FA7B;
-	}
-
-	.links a:nth-of-type(7n + 7) {
-		--rain: #8BE9FD;
-	}
-}
-
 #recent p::before {
 	font-family: var(--monospace-font);
 	content: "\21AA";
 	/* Unicode for &#10551; */
 	color: var(--black) display: inline-block;
 	margin-right: 0.4em;
+}
+
+:root {
+  /* light mode */
+  --slate:        #1f2937;
+  --rust:         #7c2d12;
+  --teal:         #065f46;
+  --royal-blue:   #1e40af;
+  --violet:       #6d28d9;
+  --rose:         #9d174d;
+  --amber:        #92400e;
+
+  /* bright dark-mode colors */
+  --soft-red:     #ff6b6b;
+  --mint:         #34f5c5;
+  --sky-blue:     #60a5ff;
+  --lavender:     #d8b4fe;
+  --soft-pink:    #ff7ac3;
+  --golden-amber: #ffd166;
+  --cool-gray:    #cbd5e1;
+}
+
+.rainbow a:nth-child(8n + 1) { color: var(--slate); }
+.rainbow a:nth-child(8n + 2) { color: var(--rust); }
+.rainbow a:nth-child(8n + 3) { color: var(--teal); }
+.rainbow a:nth-child(8n + 4) { color: var(--royal-blue); }
+.rainbow a:nth-child(8n + 5) { color: var(--violet); }
+.rainbow a:nth-child(8n + 6) { color: var(--rose); }
+.rainbow a:nth-child(8n + 7) { color: var(--amber); }
+
+@media (prefers-color-scheme: dark) {
+  .rainbow a:nth-child(8n + 1) { color: var(--cool-gray); }
+  .rainbow a:nth-child(8n + 2) { color: var(--soft-red); }
+  .rainbow a:nth-child(8n + 3) { color: var(--mint); }
+  .rainbow a:nth-child(8n + 4) { color: var(--sky-blue); }
+  .rainbow a:nth-child(8n + 5) { color: var(--lavender); }
+  .rainbow a:nth-child(8n + 6) { color: var(--soft-pink); }
+  .rainbow a:nth-child(8n + 7) { color: var(--golden-amber); }
 }
