@@ -1,0 +1,79 @@
+
+html,
+body {
+    color: var(--text-color);
+    background-color: var(--background-color);
+}
+
+/* Fluid images via https://www.zachleat.com/web/fluid-images/ */
+img {
+    max-width: 100%;
+}
+
+img[width][height] {
+    height: auto;
+}
+
+img[src$=".svg"] {
+    width: 100%;
+    height: auto;
+    max-width: none;
+}
+
+video,
+iframe {
+    width: 100%;
+    height: auto;
+}
+
+iframe {
+    aspect-ratio: 16/9;
+}
+
+a[href] {
+    color: var(--text-color-link);
+    text-decoration: none;
+}
+
+a[href]:visited {
+    color: var(--text-color-link-visited);
+}
+
+a[href]:hover,
+a[href]:active {
+    color: var(--text-color-link-active);
+}
+
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p,
+li {
+    padding: 0;
+    margin: 0;
+}
+
+h1 {
+    font-family: var(--sans-font);
+    font-weight: 900;
+    text-transform: capitalize;
+}
+
+h1,
+h2,
+p {
+    margin: 0.4em 0;
+}
+
+table {
+    margin: 1em 0;
+}
+
+table td,
+table th {
+    padding-right: 1em;
+}

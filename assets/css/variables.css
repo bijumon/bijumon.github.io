@@ -1,0 +1,65 @@
+
+:root {
+    --sans-font: "FiraGO", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", system-ui, sans-serif;
+    --monospace-font: "Fira Code VF", Consolas, Menlo, Monaco, Andale Mono WT, Andale Mono, Lucida Console, Lucida Sans Typewriter, DejaVu Sans Mono, Bitstream Vera Sans Mono, Liberation Mono, Nimbus Mono L, Courier New, Courier, monospace;
+    --serif-font: "Apple Garamond", Baskerville, "Times New Roman", "Droid Serif", Times, "Source Serif Pro", serif;
+
+    /* light mode */
+    --blue-2: #0000EE;
+    --slate: #1f2937;
+    --rust: #7c2d12;
+    --teal: #065f46;
+    --royal-blue: #1e40af;
+    --violet: #6d28d9;
+    --rose: #9d174d;
+    --amber: #92400e;
+
+    /* dark-mode */
+    --soft-red: #ff6b6b;
+    --mint: #34f5c5;
+    --sky-blue: #60a5ff;
+    --lavender: #d8b4fe;
+    --soft-pink: #ff7ac3;
+    --golden-amber: #ffd166;
+    --cool-gray: #cbd5e1;
+    --electric-blue: #33BBFF;
+
+    --black: #000000;
+    --gray-100: #101010;
+    --gray-200: #212121;
+    --gray-300: #323232;
+    --gray-400: #434343;
+    --gray-500: #545454;
+    --gray-600: #656565;
+    --gray-700: #767676;
+    --gray-800: #878787;
+    --gray-900: #989898;
+    --gray-AAA: #A9A9A9;
+    --gray-BBB: #BABABA;
+    --gray-CCC: #CBCBCB;
+    --gray-DDD: #DCDCDC;
+    --gray-EEE: #EDEDED;
+    --gray-FFF: #FEFEFE;
+    --white: #FFFFFF;
+
+    --border-color: var(--gray-DDD);
+    --background-color: var(--white);
+    --syntax-tab-size: 2;
+    --text-color: var(--black);
+    --text-color-link: var(--blue-2);
+    --text-color-link-active: var(--text-color-link);
+    --text-color-link-visited: var(--text-color-link);
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --border-color: var(--gray-300);
+        --background-color: var(--gray-100);
+
+        --text-color: var(--white);
+        --text-color-link: var(--electric-blue);
+        --text-color-link-active: var(--text-color-link);
+        --text-color-link-visited: var(--text-color-link);
+    }
+}
+
