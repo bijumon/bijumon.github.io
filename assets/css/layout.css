@@ -1,0 +1,98 @@
+
+body {
+	margin: 0;
+	padding: 0;
+	width: 100%;
+}
+
+#container {
+	margin: 0 auto;
+	width: 90%;
+}
+
+/* ≥ 800px */
+@media (min-width: 800px) {
+	html {
+		font-size: 100%;
+		/* ~16.8px */
+		line-height: 1.5;
+	}
+}
+
+/* ≥ 960px */
+@media (min-width: 960px) {
+	html {
+		font-size: 125%;
+		/* ~17.6px */
+		line-height: 1.5;
+	}
+
+	#container {
+		max-width: 32em;
+	}
+}
+
+/* ≥ 1280px */
+@media (min-width: 1280px) {
+	html {
+		font-size: 137.5%;
+		/* ~18.4px */
+		line-height: 1.5;
+	}
+
+	#container {
+		max-width: 34em;
+	}
+}
+
+/* ≥ 1440px */
+@media (min-width: 1440px) {
+	html {
+		font-size: 150%;
+		/* ~19.2px */
+		line-height: 1.6;
+	}
+
+	#container {
+		max-width: 35em;
+	}
+}
+
+/* ≥ 1920px (2K) */
+@media (min-width: 1920px) {
+	html {
+		font-size: 175%;
+		/* 20px */
+		line-height: 1.6;
+	}
+
+	#container {
+		max-width: 40em;
+	}
+}
+
+/* ≥ 2560px (3K) */
+@media (min-width: 2560px) {
+	html {
+		font-size: 150%;
+		/* ~20.8px */
+		line-height: 1.7;
+	}
+
+	#container {
+		max-width: 46em;
+	}
+}
+
+/* ≥ 3840px (4K) */
+@media (min-width: 3840px) {
+	html {
+		font-size: 175%;
+		/* ~22.4px */
+		line-height: 1.8;
+	}
+
+	#container {
+		max-width: 48em;
+	}
+}

@@ -1,0 +1,40 @@
+
+pre[class*="language-"],
+code[class*="language-"] {
+	background: var(--background-color);
+}
+
+pre:not([class*="language-"]) {
+	margin: .5em 0;
+	line-height: 1.375;
+	/* 22px /16 */
+	-moz-tab-size: var(--syntax-tab-size);
+	-o-tab-size: var(--syntax-tab-size);
+	tab-size: var(--syntax-tab-size);
+	-webkit-hyphens: none;
+	-ms-hyphens: none;
+	hyphens: none;
+	direction: ltr;
+	text-align: left;
+	white-space: pre;
+	word-spacing: normal;
+	word-break: normal;
+	overflow-x: auto;
+}
+
+code {
+	word-break: break-all;
+}
+
+pre,
+code {
+	white-space: pre-wrap !important;
+	/* Standard CSS 2.1+ */
+	word-wrap: break-word !important;
+	/* IE-specific, now an alias for overflow-wrap */
+	overflow-wrap: break-word !important;
+	/* Standard CSS3 */
+	overflow-x: auto !important;
+	/* Adds horizontal scrollbar if needed */
+}
+
