@@ -6,6 +6,8 @@ date: 2025-12-13
 description: build llama.cpp inside a Docker container with AMD ROCm support
 ---
 
+Github Gist - [Docker files](https://gist.github.com/bijumon/fe538885b530b7fa00f01225d0f1ce82)
+
 Lets build llama.cpp inside a Docker container with AMD ROCm + HIP toolchain installed. The result is a container image that can compile optimized HIP binaries for our AMD GPU and run GGUF models with full GPU acceleration.
 
 ## Ubuntu container image with ROCm/HIP
@@ -24,8 +26,8 @@ Set these shell variables:
 
 - `HIP_VISIBLE_DEVICES` — which GPU(s) the ROCm runtime should expose to the process inside the container. It takes a comma-separated list of GPU indices.
 
-  + `HIP_VISIBLE_DEVICES=0` → expose only GPU 0
-  + `HIP_VISIBLE_DEVICES=0,1` → expose GPUs 0 and 1
+  - `HIP_VISIBLE_DEVICES=0` → expose only GPU 0
+  - `HIP_VISIBLE_DEVICES=0,1` → expose GPUs 0 and 1
 
 ```bash
 docker run -it \
