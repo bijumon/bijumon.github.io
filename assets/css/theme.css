@@ -15,6 +15,11 @@ hr {
 	font-size: 2rem;
 }
 
+.logo span {
+	font-family: var(--sans-font);
+	font-weight: 900;
+}
+
 .navbar {
 	display: flex;
 	justify-content: space-between;
@@ -32,7 +37,6 @@ hr {
 
 .nav-links a {
 	text-decoration: none;
-	color: #333;
 	font-size: 1.1rem;
 }
 
@@ -55,7 +59,7 @@ main .posts,
 #bookmarks,
 #recent {
 	padding: 1em 0;
-	border-bottom: 1px solid var(--gray-DDD);
+	border-bottom: 1px solid var(--gray-400);
 }
 
 .post h2 {
