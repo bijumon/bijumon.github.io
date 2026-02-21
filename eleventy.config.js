@@ -1,8 +1,33 @@
 import { feedPlugin } from "@11ty/eleventy-plugin-rss";
 import markdownIt from "markdown-it";
 import pluginSyntaxHighlight from "@11ty/eleventy-plugin-syntaxhighlight";
+import * as lightningcss from "lightningcss";
 
 export default function (eleventyConfig) {
+
+  // Define a CSS bundle with a lightningcss post-processor
+  eleventyConfig.addBundle("css", {
+    toFileDirectory: "css",
+    transforms: [
+      async function(content) {
+        if (this.type === "css") {
+          let { code, map } = lightningcss.transform({
+            filename: this.page.inputPath,
+            code: Buffer.from(content),
+            minify: true,
+            sourceMap: true
+          });
+          
+          if (map) {
+            let mapBase64 = Buffer.from(JSON.stringify(map)).toString("base64");
+            return code.toString() + `\n/*# sourceMappingURL=data:application/json;base64,${mapBase64} */`;
+          }
+          return code.toString();
+        }
+        return content;
+      }
+    ]
+  });
 
   // ---- site metadata ----
   const metadata = {

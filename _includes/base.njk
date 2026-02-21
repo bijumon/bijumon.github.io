@@ -7,23 +7,11 @@
 		<meta name="description" content="{{ description or metadata.description }}">
         <meta name="generator" content="{{ eleventy.generator }}">
 
-        <style>
-			{% include "assets/css/fonts.css" %}
-			{% include "assets/css/reset.css" %}
-			{% include "assets/css/variables.css" %}
-			{% include "assets/css/base.css" %}
-			{% include "assets/css/typography.css" %}
-			{% include "assets/css/layout.css" %}
-			{% include "assets/css/code.css" %}
-			{% include "assets/css/theme.css" %}
-			@media (prefers-color-scheme: light) {
-				{% include "assets/css/prism-ghcolors.css" %}
-			}
-			@media (prefers-color-scheme: dark) {
-				{% include "assets/css/prism-okaidia.css" %}
-				{% include "assets/css/theme.dark.css" %}
-			}
-		</style>
+        {%- include "css-imports.njk" -%}
+
+        <link rel="stylesheet" href="{% getBundleFileUrl 'css' %}">
+        <link rel="stylesheet" href="{% getBundleFileUrl 'css', 'light' %}" media="(prefers-color-scheme: light)">
+        <link rel="stylesheet" href="{% getBundleFileUrl 'css', 'dark' %}" media="(prefers-color-scheme: dark)">
 
 		<!-- Standard favicon -->
 		<link rel="icon" href="/img/favicons/favicon.ico" sizes="any">
