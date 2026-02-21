@@ -1,26 +1,24 @@
-@media (prefers-color-scheme: dark) {
-  hr {
-		border-top: 1px solid var(--gray-400);
-		border-bottom: 1px solid var(--gray-600);
-	}
+hr {
+	border-top: 1px solid var(--gray-400);
+	border-bottom: 1px solid var(--gray-600);
+}
 
-  .navbar,
-  main .posts,
-  #bookmarks,
-  #recent {
-    border-bottom: 1px solid var(--gray-CCC);
-  }
+.navbar,
+main .posts,
+#bookmarks,
+#recent {
+	border-bottom: 1px solid var(--gray-CCC);
+}
 
-  .rainbow a:nth-child(8n + 1) { color: var(--cool-gray); }
-  .rainbow a:nth-child(8n + 2) { color: var(--soft-red); }
-  .rainbow a:nth-child(8n + 3) { color: var(--mint); }
-  .rainbow a:nth-child(8n + 4) { color: var(--sky-blue); }
-  .rainbow a:nth-child(8n + 5) { color: var(--lavender); }
-  .rainbow a:nth-child(8n + 6) { color: var(--soft-pink); }
-  .rainbow a:nth-child(8n + 7) { color: var(--golden-amber); }
+.rainbow a:nth-child(8n + 1) { color: var(--cool-gray); }
+.rainbow a:nth-child(8n + 2) { color: var(--soft-red); }
+.rainbow a:nth-child(8n + 3) { color: var(--mint); }
+.rainbow a:nth-child(8n + 4) { color: var(--sky-blue); }
+.rainbow a:nth-child(8n + 5) { color: var(--lavender); }
+.rainbow a:nth-child(8n + 6) { color: var(--soft-pink); }
+.rainbow a:nth-child(8n + 7) { color: var(--golden-amber); }
 
-	pre[class*="language-"],
-    code[class*="language-"] {
-		background: var(--background-color);
-	}
+pre[class*="language-"],
+code[class*="language-"] {
+	background: var(--background-color);
 }

@@ -43,10 +43,10 @@
 	<div id="container">
 		<nav class="navbar">
 			<div class="logo">
-				<span>N</span> {{ site.name }}
+				<span>N</span> {{ metadata.title }}
 			</div>
 			<ul class="nav-links">
-				<li><a href="{{ site.url }}">Home</a></li>
+				<li><a href="{{ metadata.url }}">Home</a></li>
 				<li><a href="/archives">Archives</a></li>
 				<li><a href="/atom.xml">Atom</a> / <a href="/rss.xml">RSS</a></li>
 			</ul>
@@ -58,7 +58,7 @@
 		</main>
 
 		<footer>
-			<p>© 2020 - {{ now | date("yyyy") }} {{ site.author }}</p>
+			<p>© 2020 - {{ now | date("yyyy") }} {{ metadata.author }}</p>
 		</footer>
 	</div>
 </body>

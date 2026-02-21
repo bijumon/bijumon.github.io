@@ -5,13 +5,14 @@ import pluginSyntaxHighlight from "@11ty/eleventy-plugin-syntaxhighlight";
 export default function (eleventyConfig) {
 
   // ---- site metadata ----
-  const site = {
-    name: "Notes",
+  const metadata = {
+    title: "Notes",
     description: "tech notes from bijumon @github",
     url: "https://bijumon.github.io",
-    author: "bijumon"
+    author: "bijumon",
+    language: "en"
   };
-  eleventyConfig.addGlobalData("site", site);
+  eleventyConfig.addGlobalData("metadata", metadata);
   
   // Set the current date
   eleventyConfig.addGlobalData("now", () => new Date());
@@ -36,12 +37,12 @@ export default function (eleventyConfig) {
   );
 
   const feedMetadata = {
-    language: "en",
-    title: site.name,
-    subtitle: site.description,
-    base: site.url,
+    language: metadata.language,
+    title: metadata.title,
+    subtitle: metadata.description,
+    base: metadata.url,
     author: {
-      name: site.author
+      name: metadata.author
     }
   };
 
