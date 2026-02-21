@@ -6,6 +6,9 @@
 		<title>{{ title or metadata.title }}</title>
 		<meta name="description" content="{{ description or metadata.description }}">
         <meta name="generator" content="{{ eleventy.generator }}">
+        <meta name="author" content="{{ metadata.author }}">
+        <link rel="canonical" href="{{ metadata.url }}{{ page.url }}">
+        <meta name="robots" content="index, follow">
 
         {%- include "css-imports.njk" -%}
 
