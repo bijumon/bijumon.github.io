@@ -54,6 +54,8 @@ jobs:
       - name: Build Eleventy Site
         # package.json: "build": "npx @11ty/eleventy"
         run: npm run build
+        env:
+          GA_ID: ${{ secrets.GA_ID }}
 
       - name: Upload Pages Artifact
         uses: actions/upload-pages-artifact@v4

@@ -13,6 +13,18 @@
         <link rel="stylesheet" href="{% getBundleFileUrl 'css', 'light' %}" media="(prefers-color-scheme: light)">
         <link rel="stylesheet" href="{% getBundleFileUrl 'css', 'dark' %}" media="(prefers-color-scheme: dark)">
 
+		{% if metadata.googleAnalyticsId %}
+		<!-- Google tag (gtag.js) -->
+		<script async src="https://www.googletagmanager.com/gtag/js?id={{ metadata.googleAnalyticsId }}"></script>
+		<script>
+			window.dataLayer = window.dataLayer || [];
+			function gtag(){dataLayer.push(arguments);}
+			gtag('js', new Date());
+
+			gtag('config', '{{ metadata.googleAnalyticsId }}');
+		</script>
+		{% endif %}
+
 		<!-- Standard favicon -->
 		<link rel="icon" href="/img/favicons/favicon.ico" sizes="any">
 
