@@ -1,3 +1,4 @@
+import "dotenv/config";
 import { feedPlugin } from "@11ty/eleventy-plugin-rss";
 import markdownIt from "markdown-it";
 import pluginSyntaxHighlight from "@11ty/eleventy-plugin-syntaxhighlight";
@@ -35,7 +36,8 @@ export default function (eleventyConfig) {
     description: "tech notes from bijumon @github",
     url: "https://bijumon.github.io",
     author: "bijumon",
-    language: "en"
+    language: "en",
+    googleAnalyticsId: process.env.GA_ID
   };
   eleventyConfig.addGlobalData("metadata", metadata);
   
