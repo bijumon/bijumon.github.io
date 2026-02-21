@@ -2,8 +2,7 @@
 {% block content %}
 <article class="posts post">
   <small>
-    <small>permalink: </small><a href="{{ page.url }}">{{ site.url }}{{ page.url }}</a>
-    {{ permalink }}
+    {{ page.date | date }} &middot; <a href="{{ page.url }}">{{ metadata.url }}{{ page.url }}</a>
   </small>
   <h1>{{ title }}</h1>
 

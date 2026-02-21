@@ -70,7 +70,8 @@ main .posts,
 	font-family: var(--monospace-font);
 	content: "\21AA";
 	/* Unicode for &#10551; */
-	color: var(--black) display: inline-block;
+	color: var(--black);
+	display: inline-block;
 	margin-right: 0.4em;
 }
 
