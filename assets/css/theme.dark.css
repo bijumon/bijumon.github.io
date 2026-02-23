@@ -3,6 +3,11 @@ hr {
 	border-bottom: 1px solid var(--gray-600);
 }
 
+pre[class*="language-"],
+code[class*="language-"] {
+	background: var(--background-color);
+}
+
 .navbar,
 main .posts,
 #bookmarks,
@@ -18,7 +23,6 @@ main .posts,
 .rainbow a:nth-child(8n + 6) { color: var(--soft-pink); }
 .rainbow a:nth-child(8n + 7) { color: var(--golden-amber); }
 
-pre[class*="language-"],
-code[class*="language-"] {
-	background: var(--background-color);
+#recent p::before {
+  color: var(--white);
 }
