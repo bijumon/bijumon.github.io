@@ -6,6 +6,26 @@ description: collection of linux tools, tips and tricks (WORK IN PROGRESS)
 tags: [ "post" ]
 ---
 
+
+sudo journalctl -n 99 -kf --grep=UFW
+
+/etc/doas.conf
+
+permit setenv :wheel
+
+[doas - ArchWiki](https://wiki.archlinux.org/title/Doas)
+
+Build site once: npx @11ty/eleventy
+Serve locally with live reload: npx @11ty/eleventy --serve
+Watch for file changes: npx @11ty/eleventy --watch
+
+[SSH keys - ArchWiki](https://wiki.archlinux.org/title/SSH_keys#SSH_agents)
+systemctl status ssh-agent --user
+
+`yes | sudo pacman -Scc --noconfirm`
+
+---
+
 Create a new user who is a member of the same groups as the current user.
 
 ``` shell
