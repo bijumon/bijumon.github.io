@@ -1,0 +1,26 @@
+services:
+  eleventy-build:
+    build:
+      context: .
+      dockerfile: Containerfile
+    image: localhost/eleventy-blog:latest
+    working_dir: /site
+    entrypoint: ["npx", "@11ty/eleventy"]
+    volumes:
+      - .:/site:Z
+      - node_modules:/site/node_modules
+    environment:
+      - NODE_ENV=production
+
+  eleventy-serve:
+    image: localhost/eleventy-blog:latest
+    working_dir: /site
+    entrypoint: ["npx", "@11ty/eleventy", "--serve", "--port=8080"]
+    volumes:
+      - .:/site:Z
+      - node_modules:/site/node_modules
+    ports:
+      - "8080:8080"
+
+volumes:
+  node_modules:
