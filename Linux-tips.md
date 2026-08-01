@@ -6,6 +6,11 @@ description: collection of linux tools, tips and tricks (WORK IN PROGRESS)
 tags: [ "post" ]
 ---
 
+# TODO, explain setting up wlan0 bridge to use with cockpit guest VM's
+
+# add a shared directory to the VM
+# in guest add to fstab or mount using
+mount -t virtiofs share /share
 
 sudo journalctl -n 99 -kf --grep=UFW
 
