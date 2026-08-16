@@ -6,6 +6,9 @@ description: collection of linux tools, tips and tricks (WORK IN PROGRESS)
 tags: [ "post" ]
 ---
 
+# use a subshell to collect files into a tar archive, without switching to the folder
+(cd /usr/share/fonts/TTF && tar czf ~/tmp/ttf-fira-code-nerd.tgz Fira*Nerd*.ttf)
+
 # TODO, explain setting up wlan0 bridge to use with cockpit guest VM's
 
 # add a shared directory to the VM
