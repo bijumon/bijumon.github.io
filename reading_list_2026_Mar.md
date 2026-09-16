@@ -1,6 +1,7 @@
 ---
-layout: base.njk
+layout: post
 title: reading list 2026 March
+date: 2026-03-30
 ---
 
 [Thoughts on slowing the fuck down](https://mariozechner.at/posts/2026-03-25-thoughts-on-slowing-the-fuck-down/)
