@@ -1,7 +1,9 @@
 ---
-layout: base.njk
-title: pgen static site generator
+layout: post
+title: "pgen static site generator"
+date: 2026-09-16
 ---
+
 **TODO**
 
 1. Implement the file Discovery stage:
