@@ -2,38 +2,36 @@
 layout: post
 title: "Linux Tips"
 date: 2024-10-04
-description: collection of linux tools, tips and tricks (WORK IN PROGRESS)
+description: collection of linux tools, tips and tricks
 tags: [ "post" ]
 ---
-
-# use a subshell to collect files into a tar archive, without switching to the folder
+ 
+use a subshell to collect files into a tar archive, without switching to the folder
 (cd /usr/share/fonts/TTF && tar czf ~/tmp/ttf-fira-code-nerd.tgz Fira*Nerd*.ttf)
 
-# TODO, explain setting up wlan0 bridge to use with cockpit guest VM's
+---
+TODO, explain setting up wlan0 bridge to use with cockpit guest VM
 
-# add a shared directory to the VM
-# in guest add to fstab or mount using
-mount -t virtiofs share /share
+add a shared directory to the VM in guest add to fstab or mount using
 
+`mount -t virtiofs share /share`
+
+---
 sudo journalctl -n 99 -kf --grep=UFW
 
-/etc/doas.conf
-
-permit setenv :wheel
-
-[doas - ArchWiki](https://wiki.archlinux.org/title/Doas)
-
+---
 Build site once: npx @11ty/eleventy
 Serve locally with live reload: npx @11ty/eleventy --serve
 Watch for file changes: npx @11ty/eleventy --watch
 
+---
 [SSH keys - ArchWiki](https://wiki.archlinux.org/title/SSH_keys#SSH_agents)
 systemctl status ssh-agent --user
 
+---
 `yes | sudo pacman -Scc --noconfirm`
 
 ---
-
 Create a new user who is a member of the same groups as the current user.
 
 ``` shell
