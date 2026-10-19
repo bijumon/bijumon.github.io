@@ -2,7 +2,7 @@
 layout: post
 title: "reading list - 2026 February"
 tags: [ "post" ]
-date: 2026-02-30
+date: 2026-02-28
 ---
 
 [benstopics/powerbasilisk: An open-source 64-bit PowerBasic compiler written in Rust targeting LLVM](https://github.com/benstopics/powerbasilisk)
