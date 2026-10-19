@@ -1,7 +1,7 @@
 ---
 layout: post
-title: reading list 2026 March
-date: 2026-03-30
+title: reading list 2026 October
+date: 2026-10-10
 ---
 
 [Writing by Hand is Good for your Brain](https://nealstephenson.substack.com/p/writing-by-hand-is-good-for-your) , discussion @ [Hacker News](https://news.ycombinator.com/item?id=49022152)
