@@ -1,43 +1,21 @@
 services:
   build:
-    image: docker.io/pandoc/core:latest
+    image: pypandoc_build:latest
+    build:
+      context: .
+      dockerfile: Containerfile
     working_dir: /work
     volumes:
       - .:/work
-    entrypoint: ["/bin/sh", "-c"]
-    command:
-      - |
-        set -eu
-        find . -type f \( -name '*.md' -o -name '*.markdown' \) -not -path './_site/*' -exec sh -c '
-          set -eu
-          for file do
-            case "$$file" in
-              *.markdown) output="_site/$${file#./}"; output="$${output%.markdown}.html" ;;
-              *.md)       output="_site/$${file#./}"; output="$${output%.md}.html" ;;
-            esac
-            mkdir -p "$$(dirname "$$output")"
-            pandoc "$$file" --standalone --to=html5 --output="$$output"
-          done
-        ' sh {} +
+    entrypoint: ["/bin/sh"]
+    command: ["/work/build.sh"]
 
   serve:
-    image: ghcr.io/astral-sh/uv:python3.13-trixie-slim
+    image: pypandoc_build:latest
     working_dir: /work
     volumes:
       - .:/work
     ports:
       - "${PORT:-8000}:8000"
-    entrypoint: ["uv"]
-    command:
-      - run
-      - --with
-      - livereload
-      - --python
-      - "3.13"
-      - --
-      - livereload
-      - --host
-      - 0.0.0.0
-      - --port
-      - "8000"
-      - _site
+    entrypoint: ["/bin/sh"]
+    command: ["/work/serve.sh"]

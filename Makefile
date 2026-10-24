@@ -4,10 +4,16 @@ else
 COMPOSE ?= docker compose
 endif
 
-.PHONY: build server
+.PHONY: build image serve
 
-build:
+# Build the site (also ensure the container image exists and is current).
+build: image
 	$(COMPOSE) run --rm build
 
-server: build
+# Build the custom image defined by Containerfile.
+image:
+	$(COMPOSE) build build
+
+# Build the site, then start the LiveReload server.
+serve: build
 	$(COMPOSE) run --rm --service-ports serve
