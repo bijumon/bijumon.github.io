@@ -1,0 +1,12 @@
+[project]
+name = "docbuild"
+version = "0.1.0"
+requires-python = ">=3.11"
+dependencies = [
+    "pypandoc",
+    "python-frontmatter[toml]",
+    "jinja2",
+]
+
+[tool.uv]
+package = false
