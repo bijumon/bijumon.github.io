@@ -19,7 +19,7 @@ services:
     volumes:
       - .:/work
     entrypoint: ["uv", "run", "--project", "/work/_src", "--group", "dev"]
-    command: ["pytest"]
+    command: ["python", "-m", "pytest"]
 
   serve:
     image: pypandoc_build:latest
