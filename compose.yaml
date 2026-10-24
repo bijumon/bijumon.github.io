@@ -28,6 +28,7 @@ services:
     ports:
       - "${PORT:-8000}:8000"
     command:
+      - uv
       - run
       - --with
       - livereload
