@@ -18,7 +18,7 @@ services:
     working_dir: /work
     volumes:
       - .:/work
-    entrypoint: ["uv", "run", "--project", "/work/_src", "--group", "dev"]
+    entrypoint: ["uv", "run", "--project", "/work/_src"]
     command: ["python", "-m", "pytest"]
 
   serve:
