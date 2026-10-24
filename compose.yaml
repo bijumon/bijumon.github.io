@@ -21,7 +21,7 @@ services:
         ' sh {} +
 
   serve:
-    image: ghcr.io/astral-sh/uv:latest
+    image: ghcr.io/astral-sh/uv:python3.13-trixie-slim
     working_dir: /work
     volumes:
       - .:/work
