@@ -11,13 +11,11 @@ dependencies = [
     "pypandoc",
     "python-frontmatter[toml]",
     "jinja2",
+    "pytest",
 ]
 
 [project.scripts]
 docbuild = "docbuild:main"
-
-[dependency-groups]
-dev = ["pytest"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
