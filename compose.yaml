@@ -7,8 +7,8 @@ services:
     working_dir: /work
     volumes:
       - .:/work
-    entrypoint: ["uv", "run", "--no-project", "--with-requirements", "/work/requirements.txt"]
-    command: ["/work/docbuild.py"]
+    entrypoint: ["uv", "run", "--project", "/work/_src"]
+    command: ["/work/_src/docbuild.py", "/work"]
 
   serve:
     image: pypandoc_build:latest
