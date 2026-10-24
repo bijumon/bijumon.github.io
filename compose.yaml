@@ -1,6 +1,6 @@
 services:
   build:
-    image: pandoc/core:latest
+    image: docker.io/pandoc/core:latest
     working_dir: /work
     volumes:
       - .:/work
