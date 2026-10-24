@@ -27,8 +27,8 @@ services:
       - .:/work
     ports:
       - "${PORT:-8000}:8000"
+    entrypoint: ["uv"]
     command:
-      - uv
       - run
       - --with
       - livereload
