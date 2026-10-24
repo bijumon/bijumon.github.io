@@ -15,9 +15,12 @@ from markupsafe import Markup
 
 # Edit these values to configure the site's global metadata.
 site = {
-    "name": "Biju Punalor",
+    "author": "Biju Punalor",
+    "name": "Notes",
     "description": "Personal website and notes.",
     "url": "https://bijumon.github.io",
+    "language": "en",
+    "generator": "docbuild.py"
 }
 
 DOCUMENT_FORMATS = {

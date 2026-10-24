@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="{{ site.language }}">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<title>{{ site.name }} / {{page.title}}</title>
+		<meta name="description" content="{{ site.description }}">
+        <meta name="generator" content="{{ site.generator }}">
+        <meta name="author" content="{{ site.author }}">
+        <link rel="canonical" href="{{ site.url }}{{ page.url }}">
+        <meta name="robots" content="index, follow">
+
+		{% if site.googleAnalyticsId %}
+		<!-- Google tag (gtag.js) -->
+		<script async src="https://www.googletagmanager.com/gtag/js?id={{ metadata.googleAnalyticsId }}"></script>
+		<script>
+			window.dataLayer = window.dataLayer || [];
+			function gtag(){dataLayer.push(arguments);}
+			gtag('js', new Date());
+
+			gtag('config', '{{ site.googleAnalyticsId }}');
+		</script>
+		{% endif %}
+		
+		<link rel="stylesheet" href="/assets/css/fonts.css">
+		<link rel="stylesheet" href="/assets/css/reset.css">
+		<link rel="stylesheet" href="/assets/css/variables.css">
+		<link rel="stylesheet" href="/assets/css/base.css">
+		<link rel="stylesheet" href="/assets/css/typography.css">
+		<link rel="stylesheet" href="/assets/css/layout.css">
+		<link rel="stylesheet" href="/assets/css/code.css">
+		<link rel="stylesheet" href="/assets/css/theme.css">
+		                             /
+		<link rel="stylesheet" href="/assets/css/prism-ghcolors.css" media="(prefers-color-scheme: light)">
+		<link rel="stylesheet" href="/assets/css/prism-okaidia.css" media="(prefers-color-scheme: dark)">
+		<link rel="stylesheet" href="/assets/css/theme.dark.css" media="(prefers-color-scheme: dark)">
+
+		<!-- Standard favicon -->
+		<link rel="icon" href="/assets/img/favicons/favicon.ico" sizes="any">
+
+		<!-- Modern browsers (crisp on all DPIs) -->
+		<link rel="icon" href="/assets/img/favicons/favicon.svg" type="image/svg+xml">
+
+		<!-- Optional PNG fallbacks -->
+		<link rel="icon" type="image/png" sizes="16x16" href="/assets/img/favicons/favicon-16.png">
+		<link rel="icon" type="image/png" sizes="32x32" href="/assets/img/favicons/favicon-32.png">
+		<link rel="icon" type="image/png" sizes="128x128" href="/assets/img/favicons/favicon-128.png">
+
+		<!-- High-res Apple touch icon -->
+		<link rel="apple-touch-icon" href="/assets/img/favicons/apple-touch-icon-180x180.png">
+</head>
+<body>
+	<div id="container">
+		<nav class="navbar">
+			<div class="logo">
+				<span>N</span> {{ site.name }}
+			</div>
+			<ul class="nav-links">
+				<li><a href="{{ site.url }}">Home</a></li>
+				<li><a href="/archives">Archives</a></li>
+				<li><a href="/atom.xml">Atom</a> / <a href="/rss.xml">RSS</a></li>
+			</ul>
+		</nav>
+		<main>
+		<div id="bookmarks" class="rainbow">
+  		<b>bookmarks</b>:
+  		<a href="https://github.com/bijumon">bijumon@github</a>
+  		<a href="https://github.com/bijumon/bijumon.github.io">{ source-code }</a>
+  		<a href="https://mastodon.art/@bijumon">bijumon@mastodon.art</a>
+  		<a href="https://x.com/bijupunalor">biju@x.com</a>
+  		<a href="https://www.11ty.dev/docs/projects/">Eleventy Guide</a>
+  		<a href="https://kernel.org/">Kernel Archives</a>
+  		<a href="https://www.chezmoi.io/user-guide/command-overview/">chezmoi dotfiles</a>
+  		<a href="https://starship.rs/presets/">Starship shell prompt</a>
+  		<a href="https://neovim.io/">Neovim</a>
+  		<a href="https://www.gnu.org/software/emacs/tour/index.html">GNU Emacs</a>
+  		<a href="https://protesilaos.com/">Prot on Emacs</a>
+  		<a href="https://sachachua.com/blog/">Sacha Chua</a>
+  		<a href="https://docs.python.org/3/">Python3 Docs</a>
+  		<a href="https://www.pygame.org/docs/">pygame</a>
+  		<a href="https://exercism.org/tracks/python">Exercism</a>
+  		<a href="https://simonwillison.net/">Simon Willison AI</a>
+  		<a href="https://www.dwarkesh.com/">Dwarkesh Podcast</a>
+  		<a href="https://tonsky.me/">tonsky.me</a>
+  		<a href="https://mariozechner.at/">Mario Zechner</a>
+  		<a href="https://androidarts.com/">Android Arts</a>     
+  		<a href="https://100r.co/">100 Rabbits</a>
+  		<a href="https://merveilles.town/@neauoire">@DevineLuLinvega</a>
+  		<a href="https://kokorobot.ca/">Kokorobot</a>
+  		<a href="https://merveilles.town/@rek">@rek</a>  
+  		<a href="https://jvns.ca/">Julia Evans</a>
+  		<a href="https://samwho.dev/">samwho</a>
+  		<a href="https://lostgarden.com/blog-archive/">Lostgarden</a>
+  		<a href="https://alf-s-room.com/">Alf's room</a>
+  		<a href="https://cgcookie.com/community">CG Cookie</a>
+  		<a href="https://itch.io/jam/gmtk-2025">GMTK itch.io</a>
+  		<a href="https://fly.io/blog/">Fly.IO</a>
+  		<a href="https://stratechery.com/">Stratechery</a>
+  		<a href="https://github.com/bBoxType/FiraSans">Fira Sans font</a>
+  		<a href="https://www.theguardian.com/news/series/the-long-read">The Guardian long read</a>
+  		<a href="https://www.theguardian.com/news/series/the-audio-long-read">Audio long read</a>
+  		<a href="https://sinocism.com/">Sinocism - Bill Bishop</a>
+  		<a href="https://www.loper-os.org/?p=284">Loper OS</a>
+  		<a href="https://www.lrb.co.uk/">London Review of Books</a>
+  		<a href="https://www.todoist.com/productivity-methods/eat-the-frog">What Is Eat the Frog</a>
+  		<a href="https://new.bitecode.dev/">Bite code! #python</a>
+  		<a href="https://zerodhavarsity.substack.com/">Mind Over Markets</a>
+  		<a href="https://www.fabricatedknowledge.com/archive?sort=new">Fabricated Knowledge</a>
+  		<a href="https://ratheesh.livejournal.com/">Ratheesh@LiveJournal</a>
+		</div>
+    	{{ content }}
+		</main>
+
+		<footer>
+			<p>© 2020 - 2026 {{ site.author }}</p>
+		</footer>
+	</div>
+</body>
+</html>
