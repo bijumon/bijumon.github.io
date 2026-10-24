@@ -7,8 +7,19 @@ services:
     working_dir: /work
     volumes:
       - .:/work
-    entrypoint: ["uv", "run", "--project", "/work/_src"]
-    command: ["python", "/work/_src/docbuild.py", "/work"]
+    entrypoint: ["uv", "run", "--directory", "/work/_src"]
+    command: ["docbuild", "/work"]
+
+  test:
+    image: pypandoc_build:latest
+    build:
+      context: .
+      dockerfile: Containerfile
+    working_dir: /work
+    volumes:
+      - .:/work
+    entrypoint: ["uv", "run", "--directory", "/work/_src"]
+    command: ["pytest"]
 
   serve:
     image: pypandoc_build:latest
