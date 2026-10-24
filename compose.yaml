@@ -15,10 +15,10 @@ services:
     build:
       context: .
       dockerfile: Containerfile
-    working_dir: /work
+    working_dir: /work/_src
     volumes:
       - .:/work
-    entrypoint: ["uv", "run", "--project", "/work/_src"]
+    entrypoint: ["uv", "run"]
     command: ["python", "-m", "pytest"]
 
   serve:

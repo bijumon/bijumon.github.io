@@ -17,3 +17,7 @@ image:
 # Build the site, then start the LiveReload server.
 serve: build
 	$(COMPOSE) run --rm --service-ports serve
+
+# Run the tests for docbuild.py
+test: 
+	$(COMPOSE) run --rm test
