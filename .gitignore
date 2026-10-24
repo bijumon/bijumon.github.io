@@ -144,3 +144,9 @@ dist
 
 # End of https://www.toptal.com/developers/gitignore/api/node
 .vscode
+
+# Python tooling
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
