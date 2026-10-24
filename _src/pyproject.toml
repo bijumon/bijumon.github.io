@@ -8,5 +8,12 @@ dependencies = [
     "jinja2",
 ]
 
+[dependency-groups]
+dev = ["pytest"]
+
 [tool.uv]
 package = false
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
