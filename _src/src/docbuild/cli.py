@@ -6,6 +6,7 @@ from pathlib import Path
 
 from .builder import SiteBuilder
 from .errors import BuildError
+from .reporter import Reporter
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -21,13 +22,14 @@ def main(argv: list[str] | None = None) -> int:
     )
     args = parser.parse_args(argv)
     source = Path(args.source_dir).resolve()
+    reporter = Reporter()
     if not source.is_dir():
-        print(f"error: source directory does not exist: {source}", file=sys.stderr)
+        reporter.error("source directory does not exist: %s", source)
         return 2
 
     try:
-        SiteBuilder(source).build()
+        SiteBuilder(source, reporter=reporter).build()
     except (BuildError, OSError) as exc:
-        print(f"error: {exc}", file=sys.stderr)
+        reporter.error("%s", exc)
         return 1
     return 0
