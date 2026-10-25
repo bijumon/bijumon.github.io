@@ -3,6 +3,7 @@ layout: index
 title: "frontpage"
 date: 2026-10-25
 ---
+
 [Local Model Explorer - a Hugging Face Space by LocalLLaMA](https://huggingface.co/spaces/LocalLLaMA/local-model-explorer)
 
 [goose | Your open source AI agent](https://goose-docs.ai/)
