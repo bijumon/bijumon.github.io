@@ -15,7 +15,10 @@ dependencies = [
 ]
 
 [project.scripts]
-docbuild = "docbuild:main"
+docbuild = "docbuild.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/docbuild"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
