@@ -57,8 +57,7 @@
 			</div>
 			<ul class="nav-links">
 				<li><a href="{{ site.url }}">Home</a></li>
-				<li><a href="/archives">Archives</a></li>
-				<li><a href="/atom.xml">Atom</a> / <a href="/rss.xml">RSS</a></li>
+				<li><a href="/rss.xml">Feed</a></li>
 			</ul>
 		</nav>
 		<main>
@@ -108,10 +107,15 @@
   		<a href="https://www.fabricatedknowledge.com/archive?sort=new">Fabricated Knowledge</a>
   		<a href="https://ratheesh.livejournal.com/">Ratheesh@LiveJournal</a>
 		</div>
+		<hr/>
     	{{ content }}
+    	<hr/>
     	{% for page in site.pages | reverse %}
-  <a href="/{{ page.url }}">{{ page.title }}</a>
-{% endfor %}
+  			<div>
+  			<a href="/{{ page.url }}">{{ page.title }}</a>
+  			</div>
+		{% endfor %}
+		<hr/>
 		</main>
 
 		<footer>
