@@ -1,0 +1,32 @@
+name: Test Python project
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tests-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Build container image
+        run: docker compose build test
+
+      - name: Verify Python version
+        run: docker compose run --rm --entrypoint uv test run --project /work/_src python --version
+
+      - name: Run tests
+        run: docker compose run --rm test
