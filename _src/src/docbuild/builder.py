@@ -1,15 +1,18 @@
 """Orchestrate the incremental static-site build."""
 
 import hashlib
+import json
 import shutil
+from datetime import date, datetime, time
 from pathlib import Path
+from typing import Any
 
-from .config import DOCUMENT_FORMATS, OUTPUT_DIR, TEMPLATE_DIR
+from .config import DOCUMENT_FORMATS, OUTPUT_DIR, SITE_METADATA, TEMPLATE_DIR
 from .converter import DocumentConverter
 from .discovery import DocumentDiscovery
 from .errors import BuildError
 from .frontmatter import FrontmatterReader
-from .indexer import FileIndexer
+from .indexer import FileIndexer, IndexedFile
 from .renderer import TemplateRenderer
 from .reporter import Reporter
 
@@ -75,6 +78,43 @@ class SiteBuilder:
                 )
             destinations[destination] = source
 
+    @staticmethod
+    def _json_default(value: Any) -> str:
+        """Serialize frontmatter date/time values consistently for signatures."""
+        if isinstance(value, (datetime, date, time)):
+            return f"{type(value).__name__}:{value.isoformat()}"
+        raise TypeError(f"cannot serialize {type(value).__name__} in site page metadata")
+
+    @classmethod
+    def _site_signature(cls, site: dict[str, Any]) -> str:
+        """Hash shared site context so pages rebuild when site.pages changes."""
+        try:
+            payload = json.dumps(
+                site,
+                sort_keys=True,
+                separators=(",", ":"),
+                ensure_ascii=False,
+                default=cls._json_default,
+            ).encode("utf-8")
+        except (TypeError, ValueError) as exc:
+            raise BuildError(f"cannot serialize site page metadata: {exc}") from exc
+        return hashlib.sha256(payload).hexdigest()
+
+    def _site_context(self, indexed: dict[str, IndexedFile]) -> dict[str, Any]:
+        """Build deterministic site metadata and a list of every source page."""
+        pages: list[dict[str, Any]] = []
+        for relative_path, entry in sorted(indexed.items()):
+            if entry.kind != "document":
+                continue
+            output_path = Path(relative_path).with_suffix(".html").as_posix()
+            page = dict(entry.frontmatter)
+            page["source"] = relative_path
+            page["output"] = output_path
+            if not isinstance(page.get("url"), str) or not page.get("url"):
+                page["url"] = output_path
+            pages.append(page)
+        return {**SITE_METADATA, "pages": pages}
+
     def build(self) -> None:
         """Incrementally build changed documents and copy changed static files."""
         files = self.discovery.files()
@@ -83,6 +123,8 @@ class SiteBuilder:
 
         with self.indexer as indexer:
             indexed = indexer.scan(files)
+            site = self._site_context(indexed)
+            site_signature = self._site_signature(site)
             self.output.mkdir(parents=True, exist_ok=True)
 
             for source in files:
@@ -92,7 +134,9 @@ class SiteBuilder:
                     continue
 
                 destination = self._output_for(source)
-                if not indexer.needs_build(entry, destination, template_signature):
+                if not indexer.needs_build(
+                    entry, destination, template_signature, site_signature
+                ):
                     self.reporter.info("Unchanged: %s", relative)
                     continue
 
@@ -102,10 +146,10 @@ class SiteBuilder:
                     metadata, body = entry.frontmatter, entry.body
 
                 html = self.converter.convert(source, body)
-                rendered = self.renderer.render(source, metadata, html)
+                rendered = self.renderer.render(source, metadata, html, site=site)
                 destination.parent.mkdir(parents=True, exist_ok=True)
                 destination.write_text(rendered, encoding="utf-8")
-                indexer.mark_built(entry, template_signature)
+                indexer.mark_built(entry, template_signature, site_signature)
                 self.reporter.info(
                     "Built %s -> %s",
                     relative,
@@ -119,7 +163,9 @@ class SiteBuilder:
                     continue
 
                 destination = self.output / source.relative_to(self.source)
-                if not indexer.needs_build(entry, destination, template_signature):
+                if not indexer.needs_build(
+                    entry, destination, template_signature, site_signature
+                ):
                     self.reporter.info("Unchanged: %s", relative)
                     continue
 
@@ -128,5 +174,5 @@ class SiteBuilder:
                     shutil.copy2(source, destination)
                 except OSError as exc:
                     raise BuildError(f"cannot copy {source} to {destination}: {exc}") from exc
-                indexer.mark_built(entry, template_signature)
+                indexer.mark_built(entry, template_signature, site_signature)
                 self.reporter.info("Copied %s", relative)

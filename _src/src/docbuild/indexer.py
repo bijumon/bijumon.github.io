@@ -24,6 +24,7 @@ class IndexedFile:
     body: str | None
     built_signature: dict[str, int] | None
     built_template_signature: str | None
+    built_site_signature: str | None
     deleted: bool = False
 
 
@@ -115,9 +116,11 @@ class FileIndexer:
                 "built_template_signature": (
                     previous.get("built_template_signature") if previous else None
                 ),
+                "built_site_signature": (
+                    previous.get("built_site_signature") if previous else None
+                ),
                 "deleted": False,
             }
-            # Avoid writing unchanged cache entries on each invocation.
             if changed or previous is None or reappeared:
                 cache.set(relative_path, record)
 
@@ -130,6 +133,7 @@ class FileIndexer:
                 body=body,
                 built_signature=record["built_signature"],
                 built_template_signature=record["built_template_signature"],
+                built_site_signature=record["built_site_signature"],
                 deleted=False,
             )
         return indexed
@@ -139,16 +143,25 @@ class FileIndexer:
         entry: IndexedFile,
         output: Path,
         template_signature: str,
+        site_signature: str,
     ) -> bool:
-        """Return whether source, output existence, or document templates require work."""
+        """Check source/output state and shared contexts that affect rendering."""
         if not output.is_file() or entry.built_signature != entry.signature:
             return True
         if entry.kind == "document":
-            return entry.built_template_signature != template_signature
+            return (
+                entry.built_template_signature != template_signature
+                or entry.built_site_signature != site_signature
+            )
         return False
 
-    def mark_built(self, entry: IndexedFile, template_signature: str) -> None:
-        """Record the source version only after its output was written successfully."""
+    def mark_built(
+        self,
+        entry: IndexedFile,
+        template_signature: str,
+        site_signature: str,
+    ) -> None:
+        """Record the source/context only after successfully writing its output."""
         cache = self._cache()
         record = cache.get(entry.relative_path)
         if record is None:
@@ -157,7 +170,9 @@ class FileIndexer:
         record["built_template_signature"] = (
             template_signature if entry.kind == "document" else None
         )
+        record["built_site_signature"] = site_signature if entry.kind == "document" else None
         record["deleted"] = False
         cache.set(entry.relative_path, record)
         entry.built_signature = entry.signature
         entry.built_template_signature = record["built_template_signature"]
+        entry.built_site_signature = record["built_site_signature"]

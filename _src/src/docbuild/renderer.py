@@ -11,7 +11,7 @@ from .errors import BuildError
 
 
 class TemplateRenderer:
-    """Render converted HTML and page metadata through a Jinja2 template."""
+    """Render converted HTML, page metadata, and shared site context."""
 
     def __init__(self, template_dir: Path) -> None:
         self.environment = Environment(
@@ -31,13 +31,24 @@ class TemplateRenderer:
             raise BuildError(f"{source}: invalid layout name {layout!r}")
         return name
 
-    def render(self, source: Path, metadata: dict[str, Any], content: str) -> str:
+    def render(
+        self,
+        source: Path,
+        metadata: dict[str, Any],
+        content: str,
+        site: dict[str, Any] | None = None,
+    ) -> str:
+        """Render one page with its metadata and the shared site context.
+
+        SiteBuilder supplies site.pages with every discovered document, represented
+        by frontmatter plus source/output paths and a public URL.
+        """
         name = self._template_name(metadata.get("layout"), source)
         try:
             template = self.environment.get_template(name)
             return template.render(
                 page=metadata,
-                site=SITE_METADATA,
+                site=site if site is not None else {**SITE_METADATA, "pages": []},
                 content=Markup(content),
             )
         except TemplateError as exc:
