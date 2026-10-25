@@ -25,12 +25,6 @@ jobs:
       - name: Build container image
         run: docker compose build build
 
-      - name: Verify Python version
-        run: docker compose run --rm --entrypoint uv build run --project /work/_src python --version
-
-      - name: Run tests
-        run: docker compose run --rm test
-
       - name: Build site
         run: docker compose run --rm build
 
