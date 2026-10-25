@@ -3,8 +3,18 @@ name: Test Python project
 on:
   push:
     branches: [main]
+    paths:
+      - "_src/**"
+      - "Containerfile"
+      - "compose.yaml"
+      - ".github/workflows/tests.yml"
   pull_request:
     branches: [main]
+    paths:
+      - "_src/**"
+      - "Containerfile"
+      - "compose.yaml"
+      - ".github/workflows/tests.yml"
   workflow_dispatch:
 
 permissions:
