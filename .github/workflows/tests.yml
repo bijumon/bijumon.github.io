@@ -34,7 +34,7 @@ jobs:
         run: docker compose pull test
 
       - name: Verify Python version
-        run: docker compose run --rm --entrypoint uv test python --version
+        run: docker compose run --rm test python --version
 
       - name: Run tests
         run: docker compose run --rm test
