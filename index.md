@@ -2,6 +2,7 @@
 layout: index
 title: "frontpage"
 date: 2026-10-25
+skip_list: yes
 ---
 
 [Local Model Explorer - a Hugging Face Space by LocalLLaMA](https://huggingface.co/spaces/LocalLLaMA/local-model-explorer)
