@@ -1,4 +1,4 @@
-# Build the site with the published GHCR image, then deploy it to GitHub Pages on main.
+# Build and deploy the site using ghcr.io/bijumon/pypandoc-alpine-uv:latest.
 name: Build and deploy site
 
 on:
@@ -21,7 +21,7 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Pull published build image
         run: docker compose pull build
@@ -31,7 +31,7 @@ jobs:
 
       - name: Upload site artifact
         if: github.event_name != 'pull_request'
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v5
         with:
           path: _site
 
@@ -51,4 +51,4 @@ jobs:
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
