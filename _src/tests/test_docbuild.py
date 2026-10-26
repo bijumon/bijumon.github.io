@@ -241,3 +241,13 @@ def test_site_page_catalog_change_rebuilds_unchanged_pages(tmp_path: Path) -> No
     assert convert.call_count == 4
     alpha_output = (tmp_path / "_site" / "alpha.html").read_text(encoding="utf-8")
     assert "Bravo Updated" in alpha_output
+
+
+def test_markdown_conversion_uses_commonmark_with_fenced_code_blocks(tmp_path: Path) -> None:
+    from docbuild.converter import DocumentConverter
+
+    source = tmp_path / "page.md"
+    with patch("docbuild.converter.pypandoc.convert_text", return_value="<pre><code></code></pre>") as convert:
+        DocumentConverter().convert(source, "```python\nprint('hello')\n```")
+
+    assert convert.call_args.kwargs["format"] == "commonmark+fenced_code_blocks"
