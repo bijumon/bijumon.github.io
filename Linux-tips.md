@@ -5,7 +5,49 @@ date: 2024-10-04
 description: collection of linux tools, tips and tricks
 tags: [ "post" ]
 ---
- 
+`/bin/sh`, one line, handling directory names with spaces:
+
+```sh
+dirs=$(find /media -mindepth 1 -maxdepth 1 -type d -exec printf '%s\n' '{}' \;); printf '%s\n' "$dirs" | while IFS= read -r dir; do printf '%s\n' "$dir"; done
+```
+* * *
+[python: how to check if a line is an empty line - Stack Overflow](https://stackoverflow.com/questions/7896495/python-how-to-check-if-a-line-is-an-empty-line)
+
+If you want to ignore lines with only whitespace:
+
+``` python
+if line.strip():
+    ... do something
+```
+
+The empty string is a False value.
+
+Or if you really want only empty lines:
+
+``` python
+if line in ['\n', '\r\n']:
+    ... do  something
+```
+* * *
+[Search for executable files using find command](https://stackoverflow.com/questions/4458120/search-for-executable-files-using-find-command)
+
+> answered by [GreenGiant - Stack Overflow](https://stackoverflow.com/users/539048/greengiant)
+
+On GNU versions of find you can use `-executable`:
+
+``` shell
+find . -type f -executable -print
+```
+
+For BSD (and MacOS) versions of find, you can use `-perm` with `+` and an octal mask:
+
+``` shell
+find . -type f -perm +111 -print
+```
+
+In this context "+" means "any of these bits are set" and 111 is the execute bits. Note that this is not identical to the `-executable` predicate in GNU find. In particular, `-executable` tests that the file can be executed by the current user, while `-perm +111` just tests if any execute permissions are set.
+
+* * * 
 use a subshell to collect files into a tar archive, without switching to the folder
 (cd /usr/share/fonts/TTF && tar czf ~/tmp/ttf-fira-code-nerd.tgz Fira*Nerd*.ttf)
 
