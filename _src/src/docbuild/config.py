@@ -12,8 +12,8 @@ SITE_METADATA: Final[dict[str, str]] = {
 }
 
 DOCUMENT_FORMATS: Final[dict[str, str]] = {
-    ".md": "commonmark+fenced_code_blocks",
-    ".markdown": "commonmark+fenced_code_blocks",
+    ".md": "commonmark",
+    ".markdown": "commonmark",
     ".dj": "djot",
     ".djot": "djot",
 }
