@@ -26,3 +26,8 @@ main .posts,
 #recent p::before {
   color: var(--white);
 }
+
+/* pandoc skylighting syntax highlighter */
+div.sourceCode {
+	background-color: transparent;
+}
