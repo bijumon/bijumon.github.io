@@ -1,4 +1,4 @@
-# Run pytest in the published GHCR image when Python sources or test configuration change.
+# Run Python version checks and pytest using ghcr.io/bijumon/pypandoc-alpine-uv:latest.
 name: Test Python project
 
 on:
@@ -29,7 +29,7 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Pull published test image
         run: docker compose pull test
