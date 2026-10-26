@@ -1,4 +1,4 @@
-# Run Python version checks and pytest using ghcr.io/bijumon/pypandoc-alpine-uv:latest.
+# Run Python version checks and pytest with ghcr.io/bijumon/pypandoc_alpine_uv:latest.
 name: Test Python project
 
 on:
@@ -30,9 +30,6 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v7
-
-      - name: Pull published test image
-        run: docker compose pull test
 
       - name: Verify Python version
         run: docker compose run --rm test python --version
