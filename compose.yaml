@@ -1,9 +1,6 @@
 services:
   build:
-    image: pypandoc_build:latest
-    build:
-      context: .
-      dockerfile: Containerfile
+    image: ghcr.io/bijumon/pypandoc-alpine-uv:latest
     working_dir: /work
     volumes:
       - .:/work
@@ -11,10 +8,7 @@ services:
     command: ["docbuild", "/work"]
 
   test:
-    image: pypandoc_build:latest
-    build:
-      context: .
-      dockerfile: Containerfile
+    image: ghcr.io/bijumon/pypandoc-alpine-uv:latest
     working_dir: /work/_src
     volumes:
       - .:/work
@@ -22,7 +16,7 @@ services:
     command: ["python", "-m", "pytest"]
 
   serve:
-    image: pypandoc_build:latest
+    image: ghcr.io/bijumon/pypandoc-alpine-uv:latest
     working_dir: /work
     volumes:
       - .:/work
