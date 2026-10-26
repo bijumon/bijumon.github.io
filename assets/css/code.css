@@ -38,3 +38,7 @@ code {
 	/* Adds horizontal scrollbar if needed */
 }
 
+/* pandoc skylighting syntax highlighter */
+div.sourceCode {
+  background-color: transparent;
+}

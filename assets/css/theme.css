@@ -82,3 +82,9 @@ main .posts,
 .rainbow a:nth-child(8n + 5) { color: var(--violet); }
 .rainbow a:nth-child(8n + 6) { color: var(--rose); }
 .rainbow a:nth-child(8n + 7) { color: var(--amber); }
+
+/* pandoc skylighting syntax highlighter */
+div.sourceCode {
+  background-color: transparent;
+}
+
