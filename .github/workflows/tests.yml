@@ -1,3 +1,4 @@
+# Run pytest in the published GHCR image when Python sources or test configuration change.
 name: Test Python project
 
 on:
