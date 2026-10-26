@@ -5,14 +5,12 @@ on:
     branches: [main]
     paths:
       - "_src/**"
-      - "Containerfile"
       - "compose.yaml"
       - ".github/workflows/tests.yml"
   pull_request:
     branches: [main]
     paths:
       - "_src/**"
-      - "Containerfile"
       - "compose.yaml"
       - ".github/workflows/tests.yml"
   workflow_dispatch:
@@ -32,11 +30,11 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
 
-      - name: Build container image
-        run: docker compose build test
+      - name: Pull published test image
+        run: docker compose pull test
 
       - name: Verify Python version
-        run: docker compose run --rm --entrypoint uv test run --project /work/_src python --version
+        run: docker compose run --rm --entrypoint uv test python --version
 
       - name: Run tests
         run: docker compose run --rm test
