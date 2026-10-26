@@ -1,4 +1,4 @@
-# Build and deploy the site using ghcr.io/bijumon/pypandoc-alpine-uv:latest.
+# Build and deploy the site with ghcr.io/bijumon/pypandoc_alpine_uv:latest.
 name: Build and deploy site
 
 on:
@@ -22,9 +22,6 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v7
-
-      - name: Pull published build image
-        run: docker compose pull build
 
       - name: Build site
         run: docker compose run --rm build
