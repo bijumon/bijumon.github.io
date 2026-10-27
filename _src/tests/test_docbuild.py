@@ -4,6 +4,9 @@ from unittest.mock import patch
 
 import dbm.sqlite3
 import json
+import os
+import subprocess
+import sys
 import pytest
 
 from docbuild import BuildError, DocumentDiscovery, FileCache, FrontmatterReader, SiteBuilder
@@ -12,6 +15,13 @@ from docbuild import BuildError, DocumentDiscovery, FileCache, FrontmatterReader
 def _site(tmp_path: Path, template: str = "<title>{{ page.title }}</title>{{ content }}") -> None:
     (tmp_path / "_templates").mkdir(exist_ok=True)
     (tmp_path / "_templates" / "page.template").write_text(template, encoding="utf-8")
+
+
+def _create_symlink(link: Path, target: Path, *, target_is_directory: bool = False) -> None:
+    try:
+        link.symlink_to(target, target_is_directory=target_is_directory)
+    except (NotImplementedError, OSError) as exc:
+        pytest.skip(f"symbolic links are not supported in this environment: {exc}")
 
 
 def test_discovery_ignores_dot_and_underscore_paths(tmp_path: Path) -> None:
@@ -24,6 +34,79 @@ def test_discovery_ignores_dot_and_underscore_paths(tmp_path: Path) -> None:
     discovery = DocumentDiscovery(tmp_path)
     assert [p.name for p in discovery.documents()] == ["page.md"]
     assert [p.name for p in discovery.static_files()] == ["visible.txt"]
+
+
+def test_discovery_skips_symlinks_to_files_and_directories(tmp_path: Path) -> None:
+    source = tmp_path / "source"
+    source.mkdir()
+    (source / "page.md").write_text("# Page", encoding="utf-8")
+    (source / "static.txt").write_text("asset", encoding="utf-8")
+
+    internal_dir = source / "nested"
+    internal_dir.mkdir()
+    (internal_dir / "inside.md").write_text("# Nested", encoding="utf-8")
+
+    external_dir = tmp_path / "outside"
+    external_dir.mkdir()
+    (external_dir / "secret.md").write_text("# Outside", encoding="utf-8")
+    (external_dir / "secret.txt").write_text("outside asset", encoding="utf-8")
+
+    _create_symlink(
+        source / "internal-alias",
+        internal_dir,
+        target_is_directory=True,
+    )
+    _create_symlink(
+        source / "external-alias",
+        external_dir,
+        target_is_directory=True,
+    )
+    _create_symlink(source / "external-page.md", external_dir / "secret.md")
+    _create_symlink(source / "external-asset.txt", external_dir / "secret.txt")
+    _create_symlink(source / "broken.txt", tmp_path / "missing.txt")
+
+    discovered = DocumentDiscovery(source).files()
+
+    assert [path.relative_to(source).as_posix() for path in discovered] == [
+        "nested/inside.md",
+        "page.md",
+        "static.txt",
+    ]
+
+
+def test_discovery_does_not_follow_symlink_to_ancestor(tmp_path: Path) -> None:
+    source = tmp_path / "source"
+    source.mkdir()
+    (source / "page.md").write_text("# Page", encoding="utf-8")
+    nested = source / "nested"
+    nested.mkdir()
+    _create_symlink(nested / "back-to-source", source, target_is_directory=True)
+
+    # Isolate discovery so a regression that follows the ancestor link cannot
+    # hang the main pytest process indefinitely.
+    package_source = Path(__file__).resolve().parents[1] / "src"
+    env = os.environ.copy()
+    env["PYTHONPATH"] = os.pathsep.join(
+        part for part in (str(package_source), env.get("PYTHONPATH", "")) if part
+    )
+    script = (
+        "from pathlib import Path; import sys; "
+        "from docbuild import DocumentDiscovery; "
+        "root = Path(sys.argv[1]); "
+        "print('\\n'.join(path.relative_to(root).as_posix() "
+        "for path in DocumentDiscovery(root).files()))"
+    )
+
+    result = subprocess.run(
+        [sys.executable, "-c", script, str(source)],
+        capture_output=True,
+        check=True,
+        text=True,
+        timeout=5,
+        env=env,
+    )
+
+    assert result.stdout.splitlines() == ["page.md"]
 
 
 def test_reads_yaml_frontmatter(tmp_path: Path) -> None:
@@ -200,7 +283,7 @@ def test_site_pages_are_available_to_jinja_filters(tmp_path: Path) -> None:
             '<p id="count">{{ site.pages | count }}</p>'
             '<ul>{% for item in site.pages | reverse %}'
             '<li>{{ item.title }}|{{ item.source }}|{{ item.url }}</li>'
-            "{% endfor %}</ul>{{ content }}"
+            "</ul>{{ content }}"
         ),
     )
     (tmp_path / "alpha.md").write_text("---\ntitle: Alpha\n---\n\nAlpha", encoding="utf-8")
