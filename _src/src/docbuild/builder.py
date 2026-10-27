@@ -7,7 +7,7 @@ from datetime import date, datetime, time
 from pathlib import Path
 from typing import Any
 
-from .config import DOCUMENT_FORMATS, OUTPUT_DIR, SITE_METADATA, TEMPLATE_DIR
+from .config import DOCUMENT_FORMATS, OUTPUT_DIR, TEMPLATE_DIR, load_site_metadata
 from .converter import DocumentConverter
 from .discovery import DocumentDiscovery
 from .errors import BuildError
@@ -22,13 +22,17 @@ class SiteBuilder:
 
     def __init__(self, source: Path, reporter: Reporter | None = None) -> None:
         self.source = source.resolve()
+        self.site_metadata = load_site_metadata(self.source)
         self.output = self.source / OUTPUT_DIR
         self.template_dir = self.source / TEMPLATE_DIR
         self.reporter = reporter or Reporter()
         self.discovery = DocumentDiscovery(self.source)
         self.frontmatter = FrontmatterReader()
         self.converter = DocumentConverter()
-        self.renderer = TemplateRenderer(self.template_dir)
+        self.renderer = TemplateRenderer(
+            self.template_dir,
+            site_metadata=self.site_metadata,
+        )
         self.indexer = FileIndexer(
             self.source,
             self.discovery,
@@ -101,7 +105,7 @@ class SiteBuilder:
         return hashlib.sha256(payload).hexdigest()
 
     def _site_context(self, indexed: dict[str, IndexedFile]) -> dict[str, Any]:
-        """Build deterministic site metadata and a list of every source page."""
+        """Build site metadata and a list of every source page."""
         pages: list[dict[str, Any]] = []
         for relative_path, entry in sorted(indexed.items()):
             if entry.kind != "document":
@@ -113,7 +117,7 @@ class SiteBuilder:
             if not isinstance(page.get("url"), str) or not page.get("url"):
                 page["url"] = output_path
             pages.append(page)
-        return {**SITE_METADATA, "pages": pages}
+        return {**self.site_metadata, "pages": pages}
 
     def build(self) -> None:
         """Incrementally build changed documents and copy changed static files."""

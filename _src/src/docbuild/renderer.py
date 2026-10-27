@@ -6,18 +6,23 @@ from typing import Any
 from jinja2 import Environment, FileSystemLoader, TemplateError, select_autoescape
 from markupsafe import Markup
 
-from .config import DEFAULT_LAYOUT, SITE_METADATA
+from .config import DEFAULT_LAYOUT
 from .errors import BuildError
 
 
 class TemplateRenderer:
     """Render converted HTML, page metadata, and shared site context."""
 
-    def __init__(self, template_dir: Path) -> None:
+    def __init__(
+        self,
+        template_dir: Path,
+        site_metadata: dict[str, Any] | None = None,
+    ) -> None:
         self.environment = Environment(
             loader=FileSystemLoader(str(template_dir)),
             autoescape=select_autoescape(default=True),
         )
+        self.site_metadata = dict(site_metadata or {})
 
     @staticmethod
     def _template_name(layout: Any, source: Path) -> str:
@@ -38,17 +43,18 @@ class TemplateRenderer:
         content: str,
         site: dict[str, Any] | None = None,
     ) -> str:
-        """Render one page with its metadata and the shared site context.
+        """Render one page with its metadata and shared site context.
 
         SiteBuilder supplies site.pages with every discovered document, represented
         by frontmatter plus source/output paths and a public URL.
         """
         name = self._template_name(metadata.get("layout"), source)
+        context = site if site is not None else {**self.site_metadata, "pages": []}
         try:
             template = self.environment.get_template(name)
             return template.render(
                 page=metadata,
-                site=site if site is not None else {**SITE_METADATA, "pages": []},
+                site=context,
                 content=Markup(content),
             )
         except TemplateError as exc:

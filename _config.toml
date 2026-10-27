@@ -1,0 +1,7 @@
+# Site metadata available to Jinja2 templates as the "site" object.
+author = "Biju Punalor"
+name = "Notes"
+description = "Personal website and notes."
+url = "https://bijumon.github.io"
+language = "en"
+generator = "docbuild.py"

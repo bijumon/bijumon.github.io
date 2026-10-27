@@ -12,6 +12,20 @@ import pytest
 from docbuild import BuildError, DocumentDiscovery, FileCache, FrontmatterReader, SiteBuilder
 
 
+_DEFAULT_SITE_CONFIG = """author = "Biju Punalor"
+name = "Notes"
+description = "Personal website and notes."
+url = "https://bijumon.github.io"
+language = "en"
+generator = "docbuild.py"
+"""
+
+
+@pytest.fixture(autouse=True)
+def _create_default_site_config(tmp_path: Path) -> None:
+    (tmp_path / "_config.toml").write_text(_DEFAULT_SITE_CONFIG, encoding="utf-8")
+
+
 def _site(tmp_path: Path, template: str = "<title>{{ page.title }}</title>{{ content }}") -> None:
     (tmp_path / "_templates").mkdir(exist_ok=True)
     (tmp_path / "_templates" / "page.template").write_text(template, encoding="utf-8")
@@ -152,6 +166,79 @@ def test_build_renders_documents_and_copies_static_files(tmp_path: Path) -> None
         "<title>Hello</title><h1>Body</h1>"
     )
     assert (tmp_path / "_site" / "assets.txt").read_text(encoding="utf-8") == "asset"
+
+
+def test_site_metadata_is_loaded_from_toml(tmp_path: Path) -> None:
+    _site(
+        tmp_path,
+        template=(
+            "{{ site.author }}|{{ site.name }}|{{ site.description }}|"
+            "{{ site.url }}|{{ site.language }}|{{ site.generator }}{{ content }}"
+        ),
+    )
+    (tmp_path / "page.md").write_text("# Body", encoding="utf-8")
+    (tmp_path / "_config.toml").write_text(
+        'author = "Example Author"\n'
+        'name = "Example Site"\n'
+        'description = "A configured site."\n'
+        'url = "https://example.test"\n'
+        'language = "fr"\n'
+        'generator = "toml-test"\n',
+        encoding="utf-8",
+    )
+
+    with patch("docbuild.converter.pypandoc.convert_text", return_value="<p>Body</p>"):
+        SiteBuilder(tmp_path).build()
+
+    output = (tmp_path / "_site" / "page.html").read_text(encoding="utf-8")
+    assert output == (
+        "Example Author|Example Site|A configured site.|"
+        "https://example.test|fr|toml-test<p>Body</p>"
+    )
+
+
+def test_missing_site_config_is_rejected(tmp_path: Path) -> None:
+    (tmp_path / "_config.toml").unlink()
+
+    with pytest.raises(BuildError, match="configuration file not found"):
+        SiteBuilder(tmp_path)
+
+
+def test_invalid_site_config_is_rejected(tmp_path: Path) -> None:
+    (tmp_path / "_config.toml").write_text('name = "Notes"\nurl = [\n', encoding="utf-8")
+
+    with pytest.raises(BuildError, match="cannot load site configuration"):
+        SiteBuilder(tmp_path)
+
+
+def test_site_config_requires_name_description_and_url(tmp_path: Path) -> None:
+    (tmp_path / "_config.toml").write_text(
+        'name = "Notes"\ndescription = "Personal notes."\n',
+        encoding="utf-8",
+    )
+
+    with pytest.raises(BuildError, match="url"):
+        SiteBuilder(tmp_path)
+
+
+def test_config_change_rebuilds_documents(tmp_path: Path) -> None:
+    _site(tmp_path, template="<title>{{ site.name }}</title>{{ content }}")
+    (tmp_path / "page.md").write_text("# Body", encoding="utf-8")
+    config_path = tmp_path / "_config.toml"
+
+    with patch("docbuild.converter.pypandoc.convert_text", return_value="<p>Body</p>") as convert:
+        SiteBuilder(tmp_path).build()
+        config_path.write_text(
+            config_path.read_text(encoding="utf-8").replace(
+                'name = "Notes"', 'name = "Updated Notes"'
+            ),
+            encoding="utf-8",
+        )
+        SiteBuilder(tmp_path).build()
+
+    assert convert.call_count == 2
+    output = (tmp_path / "_site" / "page.html").read_text(encoding="utf-8")
+    assert output == "<title>Updated Notes</title><p>Body</p>"
 
 
 def test_detects_document_output_collisions(tmp_path: Path) -> None:
