@@ -243,11 +243,11 @@ def test_site_page_catalog_change_rebuilds_unchanged_pages(tmp_path: Path) -> No
     assert "Bravo Updated" in alpha_output
 
 
-def test_markdown_conversion_uses_commonmark_reader(tmp_path: Path) -> None:
+def test_markdown_conversion_uses_commonmark_with_pipe_tables_and_footnotes(tmp_path: Path) -> None:
     from docbuild.converter import DocumentConverter
 
     source = tmp_path / "page.md"
     with patch("docbuild.converter.pypandoc.convert_text", return_value="<pre><code></code></pre>") as convert:
         DocumentConverter().convert(source, "```python\nprint('hello')\n```")
 
-    assert convert.call_args.kwargs["format"] == "commonmark"
+    assert convert.call_args.kwargs["format"] == "commonmark+pipe_tables+footnotes"
