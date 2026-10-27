@@ -30,6 +30,8 @@ class DocumentDiscovery:
                 relative = path.relative_to(self.source)
                 if self._ignored(relative):
                     continue
+                if path.is_symlink():
+                    continue
                 if path.is_dir():
                     pending.append(path)
                 elif path.is_file():
