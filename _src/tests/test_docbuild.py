@@ -283,7 +283,7 @@ def test_site_pages_are_available_to_jinja_filters(tmp_path: Path) -> None:
             '<p id="count">{{ site.pages | count }}</p>'
             '<ul>{% for item in site.pages | reverse %}'
             '<li>{{ item.title }}|{{ item.source }}|{{ item.url }}</li>'
-            "</ul>{{ content }}"
+            "{% endfor %}</ul>{{ content }}"
         ),
     )
     (tmp_path / "alpha.md").write_text("---\ntitle: Alpha\n---\n\nAlpha", encoding="utf-8")
