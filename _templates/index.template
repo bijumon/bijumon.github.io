@@ -2,7 +2,7 @@
 
 {% block main %}
 <div id="bookmarks" class="rainbow">
-  <b>bookmarks</b>:
+  <b>bookmarks</b> :
   <a href="https://github.com/bijumon">bijumon@github</a>
   <a href="https://github.com/bijumon/bijumon.github.io">{ source-code }</a>
   <a href="https://mastodon.art/@bijumon">bijumon@mastodon.art</a>
@@ -47,12 +47,14 @@
   <a href="https://www.fabricatedknowledge.com/archive?sort=new">Fabricated Knowledge</a>
   <a href="https://ratheesh.livejournal.com/">Ratheesh@LiveJournal</a>
 </div>
-<hr>
-{{ content }}
-<hr>
+<div class="content">
+	{{ content }}
+</div>
+<div id="recent">
+	<b>Recently</b> :
 {% for page in site.pages | reverse %}
 	{% if not page.skip_list %}
-  <div>
+  <div class="page">
     <a href="/{{ page.url }}">{{ page.title }}</a>
     {% if page.description %}
      - {{ page.description }}
@@ -60,5 +62,5 @@
   </div>
   	{% endif %}
 {% endfor %}
-<hr>
+</div>
 {% endblock %}

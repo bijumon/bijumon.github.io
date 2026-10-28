@@ -4,10 +4,14 @@ a[href]:active {
     text-decoration: underline;
 }
 
+h1,h2,h3,
+ul, ol {
+	margin: 0.5em 0 0.5em 0;
+}
+
 hr {
 	border: 0;
 	height: 0;
-	border-top: 1px solid var(--gray-900);
 	border-bottom: 1px solid var(--gray-700);
 }
 
@@ -54,16 +58,20 @@ hr {
 	}
 }
 
-.navbar,
-main .posts,
+.navbar,.post h2
+main .pages,
+main .content,
 #bookmarks,
-#recent {
+#recent,
+main article,
+main article .header
+{
 	padding: 1em 0;
 	border-bottom: 1px solid var(--gray-400);
 }
 
-.post h2 {
-	margin-bottom: 0.4em;
+main article .header {
+	margin-bottom: 1em;
 }
 
 #recent p::before {

@@ -15,7 +15,7 @@ dirs=$(find /media -mindepth 1 -maxdepth 1 -type d -exec printf '%s\n' '{}' \;);
 
 If you want to ignore lines with only whitespace:
 
-``` python
+```python
 if line.strip():
     ... do something
 ```
@@ -24,7 +24,7 @@ The empty string is a False value.
 
 Or if you really want only empty lines:
 
-``` python
+```python
 if line in ['\n', '\r\n']:
     ... do  something
 ```
@@ -35,13 +35,13 @@ if line in ['\n', '\r\n']:
 
 On GNU versions of find you can use `-executable`:
 
-``` shell
+```sh
 find . -type f -executable -print
 ```
 
 For BSD (and MacOS) versions of find, you can use `-perm` with `+` and an octal mask:
 
-``` shell
+```sh
 find . -type f -perm +111 -print
 ```
 
@@ -76,11 +76,13 @@ systemctl status ssh-agent --user
 * * *
 Create a new user who is a member of the same groups as the current user.
 
-``` shell
+```sh
 $ groups
+
 users lp wheel dialout video audio render docker autologin
 
 $ printf "%s\n" $(groups) | sort
+
 audio
 autologin
 dialout
@@ -96,8 +98,9 @@ wheel
 
 `sed 's/.$//'` uses sed (stream editor) to remove the last character (which will be the trailing comma from the previous step)
 
-``` shell
+```sh
 $ printf "%s\n" $(groups) | sort | tr '\n' ',' | sed 's/.$//'
+
 audio,autologin,dialout,docker,lp,render,video,wheel
 
 $ my_groups=$(printf "%s\n" $(groups) | sort | tr '\n' ',' | sed 's/.$//')

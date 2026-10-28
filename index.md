@@ -4,6 +4,7 @@ title: "frontpage"
 date: 2026-10-25
 skip_list: yes
 ---
+<b>Now Reading</b> :
 
 [Local Model Explorer - a Hugging Face Space by LocalLLaMA](https://huggingface.co/spaces/LocalLLaMA/local-model-explorer)
 

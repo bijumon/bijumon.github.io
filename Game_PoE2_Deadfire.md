@@ -5,8 +5,7 @@ date: 2026-09-29
 description: "builds for Pillars of Eternity II playthrough 2026"
 ---
 
-# Builds
-## Zima, "Dat arsehole ascendant" Cipher 
+main character - Zima, "Dat arsehole ascendant" Cipher 
 
 Party: Zima, Eder, Aloth, Pallegina and Xoti
 
