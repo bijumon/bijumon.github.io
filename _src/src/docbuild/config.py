@@ -7,7 +7,7 @@ from typing import Any, Final
 from .errors import BuildError
 
 
-CONFIG_DEFAULTS: Final[dict[str, str]] = {
+CONFIG_DEFAULTS: Final[dict[str, Any]] = {
     "author": "Unknown Author",
     "name": "Untitled Site",
     "description": "A website built with docbuild.",
@@ -15,6 +15,8 @@ CONFIG_DEFAULTS: Final[dict[str, str]] = {
     "language": "en",
     "generator": "docbuild",
     "version": "0.5.0",
+    # Files above this size use metadata-based detection instead of full hashing.
+    "content_hash_max_bytes": 100 * 1024 * 1024,
 }
 
 DOCUMENT_FORMATS: Final[dict[str, str]] = {
@@ -52,4 +54,16 @@ def load_config(source: Path) -> dict[str, Any]:
             f"cannot read configuration file {config_path}: {exc}"
         ) from exc
 
-    return {**CONFIG_DEFAULTS, **settings}
+    config = {**CONFIG_DEFAULTS, **settings}
+    hash_limit = config["content_hash_max_bytes"]
+    if (
+        isinstance(hash_limit, bool)
+        or not isinstance(hash_limit, int)
+        or hash_limit < 0
+    ):
+        raise BuildError(
+            "content_hash_max_bytes must be a non-negative integer "
+            f"in {config_path}"
+        )
+
+    return config
