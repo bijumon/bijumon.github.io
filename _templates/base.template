@@ -64,7 +64,7 @@
       {% endblock %}
     </main>
     <footer>
-      <p>© 2020 - 2026 {{ site.author }}</p>
+      <p>© 2020 - 2026 {{ site.author }} - {{ site.generator }} - v{{ site.version }} - {{ site.language }}</p>
     </footer>
   </div>
 </body>
