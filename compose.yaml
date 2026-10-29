@@ -13,7 +13,7 @@ services:
     volumes:
       - .:/work
     entrypoint: ["uv", "run"]
-    command: ["python", "-m", "pytest"]
+    command: ["python", "-m", "pytest", "-rA"]
 
   serve:
     image: ghcr.io/bijumon/pypandoc_alpine_uv:latest
