@@ -1,5 +1,7 @@
 """Index source files and decide which outputs need rebuilding."""
 
+import hashlib
+import os
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Iterable
@@ -19,10 +21,10 @@ class IndexedFile:
     source: Path
     relative_path: str
     kind: str
-    signature: dict[str, int]
+    signature: dict[str, int | str]
     frontmatter: dict[str, Any]
     body: str | None
-    built_signature: dict[str, int] | None
+    built_signature: dict[str, int | str] | None
     built_template_signature: str | None
     built_site_signature: str | None
     deleted: bool = False
@@ -59,12 +61,23 @@ class FileIndexer:
         return self.cache
 
     @staticmethod
-    def _signature(path: Path) -> dict[str, int]:
+    def _signature(path: Path) -> dict[str, int | str]:
+        """Return a metadata and content signature for a source file.
+
+        The digest detects edits that preserve both file size and modification
+        time, which metadata-only signatures cannot distinguish.
+        """
         try:
-            stat = path.stat()
+            with path.open("rb") as source:
+                stat = os.fstat(source.fileno())
+                digest = hashlib.file_digest(source, "sha256").hexdigest()
         except OSError as exc:
-            raise BuildError(f"cannot stat source file {path}: {exc}") from exc
-        return {"size": stat.st_size, "mtime_ns": stat.st_mtime_ns}
+            raise BuildError(f"cannot read source file {path}: {exc}") from exc
+        return {
+            "size": stat.st_size,
+            "mtime_ns": stat.st_mtime_ns,
+            "sha256": digest,
+        }
 
     def scan(self, files: Iterable[Path] | None = None) -> dict[str, IndexedFile]:
         """Refresh changed source records and mark missing records as deleted.
