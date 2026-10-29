@@ -10,7 +10,12 @@ Notable changes to `docbuild`.
 - Load site metadata from the required source-root `_config.toml`.
 - Merge site-specific settings over generic, non-empty defaults.
 - Add a version string to the site configuration defaults.
+- Add configurable full-content hashing with a default 100 MiB file-size threshold; larger files use metadata signatures (`size`, `mtime_ns`, and `ctime_ns`).
+- Add regression tests for same-size edits with restored timestamps, threshold validation, and the large-file metadata fallback.
 - Add tests for defaults, overrides, missing configuration, malformed TOML, and template access.
+
+### Changed
+- Keep `content_hash_max_bytes` as an internal build setting rather than exposing it in template `site` metadata.
 
 ### Changed
 - Use generic defaults for author, site name, description, URL, and generator; real sites should define their own values in `_config.toml`.
