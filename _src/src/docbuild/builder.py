@@ -121,13 +121,23 @@ class SiteBuilder:
 
     def build(self) -> None:
         """Incrementally build changed documents and copy changed static files."""
-        site_metadata = load_config(self.source)
+        config = load_config(self.source)
+        content_hash_max_bytes = config["content_hash_max_bytes"]
+        # Hash policy is an internal build setting, not public template metadata.
+        site_metadata = {
+            key: value
+            for key, value in config.items()
+            if key != "content_hash_max_bytes"
+        }
         files = self.discovery.files()
         self._check_output_collisions(files)
         template_signature = self._template_signature()
 
         with self.indexer as indexer:
-            indexed = indexer.scan(files)
+            indexed = indexer.scan(
+                files,
+                content_hash_max_bytes=content_hash_max_bytes,
+            )
             site = self._site_context(indexed, site_metadata)
             site_signature = self._site_signature(site)
             self.output.mkdir(parents=True, exist_ok=True)
