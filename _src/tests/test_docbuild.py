@@ -275,6 +275,42 @@ def test_detects_document_output_collisions(tmp_path: Path) -> None:
         SiteBuilder(tmp_path).build()
 
 
+
+@pytest.mark.parametrize("reverse", [False, True])
+def test_detects_file_directory_output_collisions_in_any_order(
+    tmp_path: Path, reverse: bool
+) -> None:
+    document = tmp_path / "guide.md"
+    document.write_text("# Guide", encoding="utf-8")
+    image = tmp_path / "guide.html" / "image.png"
+    image.parent.mkdir()
+    image.write_bytes(b"image")
+
+    files = [document, image]
+    if reverse:
+        files.reverse()
+
+    with pytest.raises(BuildError, match="output collision") as error:
+        SiteBuilder(tmp_path)._check_output_collisions(files)
+
+    assert "guide.md" in str(error.value)
+    assert "guide.html/image.png" in str(error.value)
+
+
+def test_build_rejects_file_directory_output_conflicts_before_writing_outputs(
+    tmp_path: Path,
+) -> None:
+    (tmp_path / "guide.md").write_text("# Guide", encoding="utf-8")
+    image = tmp_path / "guide.html" / "image.png"
+    image.parent.mkdir()
+    image.write_bytes(b"image")
+
+    with pytest.raises(BuildError, match="output collision"):
+        SiteBuilder(tmp_path).build()
+
+    assert not (tmp_path / "_site").exists()
+
+
 def test_unchanged_document_is_not_converted_twice(tmp_path: Path) -> None:
     _site(tmp_path)
     (tmp_path / "page.md").write_text("---\ntitle: Hello\n---\n\n# Body", encoding="utf-8")

@@ -62,6 +62,7 @@ class SiteBuilder:
         return digest.hexdigest()
 
     def _check_output_collisions(self, files: list[Path]) -> None:
+        """Reject duplicate destinations and file/directory prefix conflicts."""
         destinations: dict[Path, Path] = {}
         for source in files:
             if source.suffix.lower() in DOCUMENT_FORMATS:
@@ -77,6 +78,22 @@ class SiteBuilder:
                     f"{destination.relative_to(self.output)}"
                 )
             destinations[destination] = source
+
+        # Check after collecting all destinations so the result does not depend
+        # on discovery order (a descendant may be encountered before its file
+        # ancestor, or vice versa).
+        for destination, source in destinations.items():
+            parent = destination.parent
+            while parent != self.output:
+                previous = destinations.get(parent)
+                if previous is not None:
+                    raise BuildError(
+                        f"output collision: {previous.relative_to(self.source)} maps to "
+                        f"{parent.relative_to(self.output)} as a file, but "
+                        f"{source.relative_to(self.source)} requires it to be a "
+                        f"directory for {destination.relative_to(self.output)}"
+                    )
+                parent = parent.parent
 
     @staticmethod
     def _json_default(value: Any) -> str:
