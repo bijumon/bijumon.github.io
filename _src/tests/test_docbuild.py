@@ -116,7 +116,7 @@ def test_site_metadata_from_config_is_available_to_templates(tmp_path: Path) -> 
         template=(
             "<title>{{ site.name }}</title>"
             "<p>{{ site.description }}</p>"
-            "<p id=\\"internal-config\\">{{ site.content_hash_max_bytes | default('not-exposed') }}</p>"
+            '<p id="internal-config">{{ site.content_hash_max_bytes | default("not-exposed") }}</p>'
             "{{ content }}"
         ),
     )
@@ -133,7 +133,7 @@ def test_site_metadata_from_config_is_available_to_templates(tmp_path: Path) -> 
     output = (tmp_path / "_site" / "page.html").read_text(encoding="utf-8")
     assert output == (
         "<title>Configured Notes</title><p>Loaded from TOML.</p>"
-        "<p id=\\"internal-config\\">not-exposed</p><h1>Body</h1>"
+        '<p id="internal-config">not-exposed</p><h1>Body</h1>'
     )
 
 
