@@ -50,8 +50,13 @@ def test_config_defaults_are_generic_nonempty_strings() -> None:
         "language": "en",
         "generator": "docbuild",
         "version": "0.5.0",
+        "content_hash_max_bytes": 100 * 1024 * 1024,
     }
-    assert all(value.strip() for value in CONFIG_DEFAULTS.values())
+    assert all(
+        isinstance(value, str) and value.strip()
+        for key, value in CONFIG_DEFAULTS.items()
+        if key != "content_hash_max_bytes"
+    )
 
 
 def test_config_uses_defaults_when_toml_is_empty(tmp_path: Path) -> None:
@@ -60,11 +65,24 @@ def test_config_uses_defaults_when_toml_is_empty(tmp_path: Path) -> None:
     assert load_config(tmp_path) == CONFIG_DEFAULTS
 
 
+@pytest.mark.parametrize("value", ['"100"', "-1", "true", "1.5"])
+def test_config_rejects_invalid_content_hash_max_bytes(tmp_path: Path, value: str) -> None:
+    (tmp_path / "_config.toml").write_text(
+        f"content_hash_max_bytes = {value}\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(BuildError, match="content_hash_max_bytes must be a non-negative integer"):
+        load_config(tmp_path)
+
+
 def test_config_toml_overrides_defaults_and_preserves_unspecified_values(
     tmp_path: Path,
 ) -> None:
     (tmp_path / "_config.toml").write_text(
-        'name = "Configured Notes"\nurl = "https://example.test"\n',
+        'name = "Configured Notes"\n'
+        'url = "https://example.test"\n'
+        'content_hash_max_bytes = 4096\n',
         encoding="utf-8",
     )
 
@@ -75,6 +93,7 @@ def test_config_toml_overrides_defaults_and_preserves_unspecified_values(
     assert config["author"] == CONFIG_DEFAULTS["author"]
     assert config["description"] == CONFIG_DEFAULTS["description"]
     assert config["language"] == CONFIG_DEFAULTS["language"]
+    assert config["content_hash_max_bytes"] == 4096
 
 
 def test_build_rejects_missing_config_file(tmp_path: Path) -> None:
@@ -94,7 +113,12 @@ def test_build_reports_invalid_config_toml(tmp_path: Path) -> None:
 def test_site_metadata_from_config_is_available_to_templates(tmp_path: Path) -> None:
     _site(
         tmp_path,
-        template="<title>{{ site.name }}</title><p>{{ site.description }}</p>{{ content }}",
+        template=(
+            "<title>{{ site.name }}</title>"
+            "<p>{{ site.description }}</p>"
+            "<p id=\\"internal-config\\">{{ site.content_hash_max_bytes | default('not-exposed') }}</p>"
+            "{{ content }}"
+        ),
     )
     (tmp_path / "_config.toml").write_text(
         'name = "Configured Notes"\n'
@@ -108,7 +132,8 @@ def test_site_metadata_from_config_is_available_to_templates(tmp_path: Path) -> 
 
     output = (tmp_path / "_site" / "page.html").read_text(encoding="utf-8")
     assert output == (
-        "<title>Configured Notes</title><p>Loaded from TOML.</p><h1>Body</h1>"
+        "<title>Configured Notes</title><p>Loaded from TOML.</p>"
+        "<p id=\\"internal-config\\">not-exposed</p><h1>Body</h1>"
     )
 
 
@@ -303,6 +328,29 @@ def test_same_size_content_change_with_restored_timestamp_is_rebuilt(tmp_path: P
     assert convert.call_count == 2
     output = (tmp_path / "_site" / "page.html").read_text(encoding="utf-8")
     assert "<h1>Other</h1>" in output
+
+
+def test_large_static_files_skip_sha256_and_use_metadata_signature(tmp_path: Path) -> None:
+    payload = b"binary-media-payload"
+    (tmp_path / "large-media.bin").write_bytes(payload)
+    config_path = tmp_path / "_config.toml"
+    config_path.write_text(
+        config_path.read_text(encoding="utf-8") + "content_hash_max_bytes = 4\n",
+        encoding="utf-8",
+    )
+
+    with patch("docbuild.indexer.hashlib.file_digest") as file_digest:
+        SiteBuilder(tmp_path).build()
+    file_digest.assert_not_called()
+
+    with FileCache(tmp_path / ".cache.db") as cache:
+        record = cache.get("large-media.bin")
+
+    assert record is not None
+    signature = record["signature"]
+    assert signature["size"] == len(payload)
+    assert "sha256" not in signature
+    assert {"size", "mtime_ns", "ctime_ns"} == set(signature)
 
 
 def test_static_files_are_not_recopied_when_unchanged(tmp_path: Path) -> None:
