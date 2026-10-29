@@ -41,6 +41,19 @@ def _provide_site_config(tmp_path: Path) -> None:
     )
 
 
+def test_config_defaults_are_generic_nonempty_strings() -> None:
+    assert CONFIG_DEFAULTS == {
+        "author": "Unknown Author",
+        "name": "Untitled Site",
+        "description": "A website built with docbuild.",
+        "url": "https://example.com",
+        "language": "en",
+        "generator": "docbuild",
+        "version": "0.5.0",
+    }
+    assert all(value.strip() for value in CONFIG_DEFAULTS.values())
+
+
 def test_config_uses_defaults_when_toml_is_empty(tmp_path: Path) -> None:
     (tmp_path / "_config.toml").write_text("", encoding="utf-8")
 
