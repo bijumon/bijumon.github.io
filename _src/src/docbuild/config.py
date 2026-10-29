@@ -16,6 +16,7 @@ CONFIG_DEFAULTS: Final[dict[str, Any]] = {
     "generator": "docbuild",
     "version": "0.5.0",
     # Files above this size use metadata-based detection instead of full hashing.
+    # Set to 0 to disable full-content hashing for all files.
     "content_hash_max_bytes": 100 * 1024 * 1024,
 }
 
