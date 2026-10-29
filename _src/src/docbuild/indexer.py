@@ -1,5 +1,7 @@
 """Index source files and decide which outputs need rebuilding."""
 
+import hashlib
+import os
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Iterable
@@ -19,10 +21,10 @@ class IndexedFile:
     source: Path
     relative_path: str
     kind: str
-    signature: dict[str, int]
+    signature: dict[str, int | str]
     frontmatter: dict[str, Any]
     body: str | None
-    built_signature: dict[str, int] | None
+    built_signature: dict[str, int | str] | None
     built_template_signature: str | None
     built_site_signature: str | None
     deleted: bool = False
@@ -59,14 +61,50 @@ class FileIndexer:
         return self.cache
 
     @staticmethod
-    def _signature(path: Path) -> dict[str, int]:
+    def _signature(
+        path: Path,
+        content_hash_max_bytes: int,
+    ) -> dict[str, int | str]:
+        """Return a content signature for small files and a metadata signature for large ones.
+
+        Files up to the configured limit are hashed in full. Larger files use
+        size, modification time, and change time to avoid reading their contents.
+        Change time improves detection when modification time is restored, but
+        metadata-only detection cannot guarantee that every content edit is found.
+        """
         try:
             stat = path.stat()
-        except OSError as exc:
-            raise BuildError(f"cannot stat source file {path}: {exc}") from exc
-        return {"size": stat.st_size, "mtime_ns": stat.st_mtime_ns}
+            if content_hash_max_bytes <= 0 or stat.st_size > content_hash_max_bytes:
+                return {
+                    "size": stat.st_size,
+                    "mtime_ns": stat.st_mtime_ns,
+                    "ctime_ns": stat.st_ctime_ns,
+                }
 
-    def scan(self, files: Iterable[Path] | None = None) -> dict[str, IndexedFile]:
+            with path.open("rb") as source:
+                # Recheck after opening in case the file changed between stat and open.
+                stat = os.fstat(source.fileno())
+                if content_hash_max_bytes <= 0 or stat.st_size > content_hash_max_bytes:
+                    return {
+                        "size": stat.st_size,
+                        "mtime_ns": stat.st_mtime_ns,
+                        "ctime_ns": stat.st_ctime_ns,
+                    }
+                digest = hashlib.file_digest(source, "sha256").hexdigest()
+        except OSError as exc:
+            raise BuildError(f"cannot inspect source file {path}: {exc}") from exc
+        return {
+            "size": stat.st_size,
+            "mtime_ns": stat.st_mtime_ns,
+            "sha256": digest,
+        }
+
+    def scan(
+        self,
+        files: Iterable[Path] | None = None,
+        *,
+        content_hash_max_bytes: int,
+    ) -> dict[str, IndexedFile]:
         """Refresh changed source records and mark missing records as deleted.
 
         A failed build does not advance built_signature; that source is retried
@@ -90,7 +128,7 @@ class FileIndexer:
         for path in sorted(source_files):
             relative_path = path.relative_to(self.source).as_posix()
             kind = "document" if path.suffix.lower() in DOCUMENT_FORMATS else "static"
-            signature = self._signature(path)
+            signature = self._signature(path, content_hash_max_bytes)
             previous = cached_records.get(relative_path)
             changed = (
                 previous is None
