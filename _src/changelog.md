@@ -21,7 +21,6 @@ Notable changes to `docbuild`.
 ### Added
 - Use Pandoc's CommonMark reader for Markdown documents.
 - Enable pipe tables and footnotes for CommonMark.
-- Support both Markdown and Djot document formats.
 
 ### Fixed
 - Skip symbolic links during source discovery to avoid traversing outside the source tree or following links back to ancestors.
@@ -49,5 +48,6 @@ Notable changes to `docbuild`.
 ### Added
 - Introduce a Python-based static-site build pipeline using Pandoc and Jinja2.
 - Render Markdown and Djot documents to HTML with frontmatter metadata and layout templates.
+- Support Markdown and Djot document formats.
 - Discover source documents, copy static assets, and keep generated output under `_site`.
 - Add an initial unit-test suite for the builder.
