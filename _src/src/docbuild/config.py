@@ -14,6 +14,7 @@ CONFIG_DEFAULTS: Final[dict[str, str]] = {
     "url": "https://bijumon.github.io",
     "language": "en",
     "generator": "docbuild.py",
+    "version": "0.1.0",
 }
 
 DOCUMENT_FORMATS: Final[dict[str, str]] = {
