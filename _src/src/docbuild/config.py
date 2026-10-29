@@ -8,12 +8,12 @@ from .errors import BuildError
 
 
 CONFIG_DEFAULTS: Final[dict[str, str]] = {
-    "author": "Biju Punalor",
-    "name": "Notes",
-    "description": "Personal website and notes.",
-    "url": "https://bijumon.github.io",
+    "author": "Unknown Author",
+    "name": "Untitled Site",
+    "description": "A website built with docbuild.",
+    "url": "https://example.com",
     "language": "en",
-    "generator": "docbuild.py",
+    "generator": "docbuild",
     "version": "0.5.0",
 }
 
