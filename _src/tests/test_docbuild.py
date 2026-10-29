@@ -280,6 +280,31 @@ def test_changed_document_is_rebuilt(tmp_path: Path) -> None:
     assert "<h1>Second</h1>" in output
 
 
+def test_same_size_content_change_with_restored_timestamp_is_rebuilt(tmp_path: Path) -> None:
+    _site(tmp_path)
+    source = tmp_path / "page.md"
+    source.write_text("# First", encoding="utf-8")
+
+    with patch(
+        "docbuild.converter.pypandoc.convert_text",
+        side_effect=["<h1>First</h1>", "<h1>Other</h1>"],
+    ) as convert:
+        SiteBuilder(tmp_path).build()
+        original_stat = source.stat()
+
+        # Same number of bytes, with the original nanosecond timestamp restored.
+        source.write_text("# Other", encoding="utf-8")
+        assert source.stat().st_size == original_stat.st_size
+        os.utime(source, ns=(original_stat.st_atime_ns, original_stat.st_mtime_ns))
+        assert source.stat().st_mtime_ns == original_stat.st_mtime_ns
+
+        SiteBuilder(tmp_path).build()
+
+    assert convert.call_count == 2
+    output = (tmp_path / "_site" / "page.html").read_text(encoding="utf-8")
+    assert "<h1>Other</h1>" in output
+
+
 def test_static_files_are_not_recopied_when_unchanged(tmp_path: Path) -> None:
     (tmp_path / "asset.txt").write_text("asset", encoding="utf-8")
     with patch("docbuild.builder.shutil.copy2", wraps=__import__("shutil").copy2) as copy:
