@@ -6,7 +6,7 @@ from typing import Any
 from jinja2 import Environment, FileSystemLoader, TemplateError, select_autoescape
 from markupsafe import Markup
 
-from .config import DEFAULT_LAYOUT, SITE_METADATA
+from .config import CONFIG_DEFAULTS, DEFAULT_LAYOUT
 from .errors import BuildError
 
 
@@ -48,7 +48,7 @@ class TemplateRenderer:
             template = self.environment.get_template(name)
             return template.render(
                 page=metadata,
-                site=site if site is not None else {**SITE_METADATA, "pages": []},
+                site=site if site is not None else {**CONFIG_DEFAULTS, "pages": []},
                 content=Markup(content),
             )
         except TemplateError as exc:

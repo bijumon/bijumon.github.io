@@ -10,6 +10,7 @@ import sys
 import pytest
 
 from docbuild import BuildError, DocumentDiscovery, FileCache, FrontmatterReader, SiteBuilder
+from docbuild.config import CONFIG_DEFAULTS, load_config
 
 
 def _site(tmp_path: Path, template: str = "<title>{{ page.title }}</title>{{ content }}") -> None:
@@ -22,6 +23,80 @@ def _create_symlink(link: Path, target: Path, *, target_is_directory: bool = Fal
         link.symlink_to(target, target_is_directory=target_is_directory)
     except (NotImplementedError, OSError) as exc:
         pytest.skip(f"symbolic links are not supported in this environment: {exc}")
+
+
+
+
+@pytest.fixture(autouse=True)
+def _provide_site_config(tmp_path: Path) -> None:
+    """Keep ordinary build tests representative of a configured site root."""
+    (tmp_path / "_config.toml").write_text(
+        'author = "Biju Punalor"\n'
+        'name = "Notes"\n'
+        'description = "Personal website and notes."\n'
+        'url = "https://bijumon.github.io"\n'
+        'language = "en"\n'
+        'generator = "docbuild.py"\n',
+        encoding="utf-8",
+    )
+
+
+def test_config_uses_defaults_when_toml_is_empty(tmp_path: Path) -> None:
+    (tmp_path / "_config.toml").write_text("", encoding="utf-8")
+
+    assert load_config(tmp_path) == CONFIG_DEFAULTS
+
+
+def test_config_toml_overrides_defaults_and_preserves_unspecified_values(
+    tmp_path: Path,
+) -> None:
+    (tmp_path / "_config.toml").write_text(
+        'name = "Configured Notes"\nurl = "https://example.test"\n',
+        encoding="utf-8",
+    )
+
+    config = load_config(tmp_path)
+
+    assert config["name"] == "Configured Notes"
+    assert config["url"] == "https://example.test"
+    assert config["author"] == CONFIG_DEFAULTS["author"]
+    assert config["description"] == CONFIG_DEFAULTS["description"]
+    assert config["language"] == CONFIG_DEFAULTS["language"]
+
+
+def test_build_rejects_missing_config_file(tmp_path: Path) -> None:
+    (tmp_path / "_config.toml").unlink()
+
+    with pytest.raises(BuildError, match="required configuration file not found"):
+        SiteBuilder(tmp_path).build()
+
+
+def test_build_reports_invalid_config_toml(tmp_path: Path) -> None:
+    (tmp_path / "_config.toml").write_text('name = "unterminated\n', encoding="utf-8")
+
+    with pytest.raises(BuildError, match="invalid TOML in configuration file"):
+        SiteBuilder(tmp_path).build()
+
+
+def test_site_metadata_from_config_is_available_to_templates(tmp_path: Path) -> None:
+    _site(
+        tmp_path,
+        template="<title>{{ site.name }}</title><p>{{ site.description }}</p>{{ content }}",
+    )
+    (tmp_path / "_config.toml").write_text(
+        'name = "Configured Notes"\n'
+        'description = "Loaded from TOML."\n',
+        encoding="utf-8",
+    )
+    (tmp_path / "page.md").write_text("# Body", encoding="utf-8")
+
+    with patch("docbuild.converter.pypandoc.convert_text", return_value="<h1>Body</h1>"):
+        SiteBuilder(tmp_path).build()
+
+    output = (tmp_path / "_site" / "page.html").read_text(encoding="utf-8")
+    assert output == (
+        "<title>Configured Notes</title><p>Loaded from TOML.</p><h1>Body</h1>"
+    )
 
 
 def test_discovery_ignores_dot_and_underscore_paths(tmp_path: Path) -> None:

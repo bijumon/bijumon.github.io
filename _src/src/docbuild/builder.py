@@ -7,7 +7,7 @@ from datetime import date, datetime, time
 from pathlib import Path
 from typing import Any
 
-from .config import DOCUMENT_FORMATS, OUTPUT_DIR, SITE_METADATA, TEMPLATE_DIR
+from .config import DOCUMENT_FORMATS, OUTPUT_DIR, TEMPLATE_DIR, load_config
 from .converter import DocumentConverter
 from .discovery import DocumentDiscovery
 from .errors import BuildError
@@ -100,7 +100,11 @@ class SiteBuilder:
             raise BuildError(f"cannot serialize site page metadata: {exc}") from exc
         return hashlib.sha256(payload).hexdigest()
 
-    def _site_context(self, indexed: dict[str, IndexedFile]) -> dict[str, Any]:
+    def _site_context(
+        self,
+        indexed: dict[str, IndexedFile],
+        site_metadata: dict[str, Any],
+    ) -> dict[str, Any]:
         """Build deterministic site metadata and a list of every source page."""
         pages: list[dict[str, Any]] = []
         for relative_path, entry in sorted(indexed.items()):
@@ -113,17 +117,18 @@ class SiteBuilder:
             if not isinstance(page.get("url"), str) or not page.get("url"):
                 page["url"] = output_path
             pages.append(page)
-        return {**SITE_METADATA, "pages": pages}
+        return {**site_metadata, "pages": pages}
 
     def build(self) -> None:
         """Incrementally build changed documents and copy changed static files."""
+        site_metadata = load_config(self.source)
         files = self.discovery.files()
         self._check_output_collisions(files)
         template_signature = self._template_signature()
 
         with self.indexer as indexer:
             indexed = indexer.scan(files)
-            site = self._site_context(indexed)
+            site = self._site_context(indexed, site_metadata)
             site_signature = self._site_signature(site)
             self.output.mkdir(parents=True, exist_ok=True)
 
