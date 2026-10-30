@@ -23,8 +23,30 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v7
 
+      # docbuild needs both its file index and previous outputs to build incrementally.
+      # PR builds can restore the main-branch cache, but only trusted main runs save it.
+      - name: Restore incremental build state
+        id: docbuild-cache
+        uses: actions/cache/restore@v6
+        with:
+          path: |
+            .cache.db
+            _site/
+          key: docbuild-${{ runner.os }}-${{ github.sha }}
+          restore-keys: |
+            docbuild-${{ runner.os }}-
+
       - name: Build site
         run: docker compose run --rm build
+
+      - name: Save incremental build state
+        if: success() && github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        uses: actions/cache/save@v6
+        with:
+          path: |
+            .cache.db
+            _site/
+          key: ${{ steps.docbuild-cache.outputs.cache-primary-key }}
 
       - name: Upload site artifact
         if: github.event_name != 'pull_request'
