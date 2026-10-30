@@ -494,8 +494,8 @@ def test_site_pages_are_available_to_jinja_filters(tmp_path: Path) -> None:
 
     output = (tmp_path / "_site" / "alpha.html").read_text(encoding="utf-8")
     assert '<p id="count">2</p>' in output
-    assert output.index("Beta|notes/beta.md|notes/beta.html") < output.index(
-        "Alpha|alpha.md|alpha.html"
+    assert output.index("Beta|notes/beta.md|/notes/beta.html") < output.index(
+        "Alpha|alpha.md|/alpha.html"
     )
 
 
@@ -531,3 +531,178 @@ def test_markdown_conversion_uses_commonmark_with_pipe_tables_and_footnotes(tmp_
         DocumentConverter().convert(source, "```python\nprint('hello')\n```")
 
     assert convert.call_args.kwargs["format"] == "commonmark+pipe_tables+footnotes"
+
+
+
+@pytest.mark.parametrize("url_value", ["notes/python.html", "/notes/python.html"])
+def test_page_url_is_site_relative_and_does_not_change_output_path(
+    tmp_path: Path, url_value: str
+) -> None:
+    _site(
+        tmp_path,
+        template=(
+            "<page-url>{{ page.url }}</page-url>"
+            "<page-output>{{ page.output }}</page-output>"
+            "{% for item in site.pages %}<catalog-url>{{ item.url }}</catalog-url>{% endfor %}"
+            "{{ content }}"
+        ),
+    )
+    source = tmp_path / "notes" / "python.md"
+    source.parent.mkdir()
+    source.write_text(
+        f'---\ntitle: Python\nurl: "{url_value}"\n---\n\nPython',
+        encoding="utf-8",
+    )
+
+    with patch("docbuild.converter.pypandoc.convert_text", return_value="<p>Python</p>"):
+        SiteBuilder(tmp_path).build()
+
+    output = (tmp_path / "_site" / "notes" / "python.html").read_text(encoding="utf-8")
+    assert "<page-url>/notes/python.html</page-url>" in output
+    assert "<page-output>notes/python.html</page-output>" in output
+    assert "<catalog-url>/notes/python.html</catalog-url>" in output
+    assert (tmp_path / "_site" / "notes" / "python.html").is_file()
+    assert not (tmp_path / "_site" / "notes" / "custom.html").exists()
+
+
+@pytest.mark.parametrize(
+    "frontmatter",
+    [
+        "---\ntitle: Python\n---\n\nPython",
+        '---\ntitle: Python\nurl: ""\n---\n\nPython',
+    ],
+)
+def test_missing_or_empty_page_url_defaults_to_output_path(
+    tmp_path: Path, frontmatter: str
+) -> None:
+    _site(tmp_path, template="<page-url>{{ page.url }}</page-url>{{ content }}")
+    (tmp_path / "notes").mkdir()
+    (tmp_path / "notes" / "python.md").write_text(frontmatter, encoding="utf-8")
+
+    with patch("docbuild.converter.pypandoc.convert_text", return_value="<p>Python</p>"):
+        SiteBuilder(tmp_path).build()
+
+    output = (tmp_path / "_site" / "notes" / "python.html").read_text(encoding="utf-8")
+    assert "<page-url>/notes/python.html</page-url>" in output
+
+
+@pytest.mark.parametrize(
+    "url_value",
+    [
+        '"https://example.org/python.html"',
+        '"//example.org/python.html"',
+        '"notes/../private.html"',
+        '"../python.html"',
+        '"notes/%2e%2e/private.html"',
+        '"notes\\\\python.html"',
+        '"notes/python.html?draft=1"',
+        '"notes/python.html#section"',
+        "12",
+        "true",
+    ],
+)
+def test_invalid_page_urls_are_rejected(tmp_path: Path, url_value: str) -> None:
+    _site(tmp_path)
+    (tmp_path / "page.md").write_text(
+        f"---\ntitle: Python\nurl: {url_value}\n---\n\nPython",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(BuildError, match="frontmatter 'url'"):
+        SiteBuilder(tmp_path).build()
+
+
+def test_page_url_is_used_for_listing_and_canonical_links(tmp_path: Path) -> None:
+    _site(
+        tmp_path,
+        template=(
+            '{% extends "base.template" %}'
+            "{% block main %}"
+            '<a id="current" href="{{ page.url }}">{{ page.title }}</a>'
+            "{% for item in site.pages %}"
+            '<a id="listing" href="{{ item.url }}">{{ item.title }}</a>'
+            "{% endfor %}"
+            "{% endblock %}"
+        ),
+    )
+    (tmp_path / "_templates" / "base.template").write_text(
+        '<link rel="canonical" href="{{ site.url.rstrip("/") }}{{ page.url }}">'
+        "{% block main %}{% endblock %}",
+        encoding="utf-8",
+    )
+    (tmp_path / "notes").mkdir()
+    (tmp_path / "notes" / "python.md").write_text(
+        "---\ntitle: Python\n---\n\nPython",
+        encoding="utf-8",
+    )
+
+    with patch("docbuild.converter.pypandoc.convert_text", return_value="<p>Python</p>"):
+        SiteBuilder(tmp_path).build()
+
+    output = (tmp_path / "_site" / "notes" / "python.html").read_text(encoding="utf-8")
+    assert '<link rel="canonical" href="https://bijumon.github.io/notes/python.html">' in output
+    assert '<a id="current" href="/notes/python.html">Python</a>' in output
+    assert '<a id="listing" href="/notes/python.html">Python</a>' in output
+
+
+def test_page_url_change_rebuilds_pages_that_use_the_page_catalog(tmp_path: Path) -> None:
+    _site(
+        tmp_path,
+        template=(
+            "{% for item in site.pages %}"
+            '<a href="{{ item.url }}">{{ item.title }}</a>'
+            "{% endfor %}{{ content }}"
+        ),
+    )
+    alpha = tmp_path / "alpha.md"
+    beta = tmp_path / "beta.md"
+    alpha.write_text("---\ntitle: Alpha\n---\n\nAlpha", encoding="utf-8")
+    beta.write_text(
+        '---\ntitle: Beta\nurl: "notes/old.html"\n---\n\nBeta',
+        encoding="utf-8",
+    )
+
+    with patch("docbuild.converter.pypandoc.convert_text", return_value="<p>Content</p>") as convert:
+        SiteBuilder(tmp_path).build()
+        beta.write_text(
+            '---\ntitle: Beta\nurl: "/notes/new.html"\n---\n\nBeta',
+            encoding="utf-8",
+        )
+        SiteBuilder(tmp_path).build()
+
+    assert convert.call_count == 4
+    alpha_output = (tmp_path / "_site" / "alpha.html").read_text(encoding="utf-8")
+    beta_output = (tmp_path / "_site" / "beta.html").read_text(encoding="utf-8")
+    assert '<a href="/notes/new.html">Beta</a>' in alpha_output
+    assert '<a href="/notes/new.html">Beta</a>' in beta_output
+    assert (tmp_path / "_site" / "beta.html").is_file()
+    assert not (tmp_path / "_site" / "notes" / "new.html").exists()
+
+
+
+def test_page_url_percent_encodes_spaces_in_source_and_custom_paths(
+    tmp_path: Path,
+) -> None:
+    _site(tmp_path, template="<page-url>{{ page.url }}</page-url>{{ content }}")
+    (tmp_path / "Blender learning path.md").write_text(
+        "# Blender", encoding="utf-8"
+    )
+    custom = tmp_path / "notes" / "Blender learning path.md"
+    custom.parent.mkdir()
+    custom.write_text(
+        '---\ntitle: Blender\nurl: "notes/Blender learning path.html"\n---\n\n'
+        "# Blender",
+        encoding="utf-8",
+    )
+
+    with patch("docbuild.converter.pypandoc.convert_text", return_value="<p>Blender</p>"):
+        SiteBuilder(tmp_path).build()
+
+    default_output = (
+        tmp_path / "_site" / "Blender learning path.html"
+    ).read_text(encoding="utf-8")
+    custom_output = (
+        tmp_path / "_site" / "notes" / "Blender learning path.html"
+    ).read_text(encoding="utf-8")
+    assert "<page-url>/Blender%20learning%20path.html</page-url>" in default_output
+    assert "<page-url>/notes/Blender%20learning%20path.html</page-url>" in custom_output
