@@ -422,6 +422,94 @@ def test_template_change_rebuilds_documents(tmp_path: Path) -> None:
     assert convert.call_count == 2
 
 
+def test_unused_template_change_does_not_rebuild_documents(tmp_path: Path) -> None:
+    _site(tmp_path)
+    (tmp_path / "_templates" / "unused.template").write_text(
+        "<aside>Unused</aside>", encoding="utf-8"
+    )
+    (tmp_path / "page.md").write_text("# Body", encoding="utf-8")
+
+    with patch("docbuild.converter.pypandoc.convert_text", return_value="<h1>Body</h1>") as convert:
+        SiteBuilder(tmp_path).build()
+        (tmp_path / "_templates" / "unused.template").write_text(
+            "<aside>Changed but still unused</aside>", encoding="utf-8"
+        )
+        SiteBuilder(tmp_path).build()
+
+    assert convert.call_count == 1
+
+
+def test_template_change_rebuilds_only_documents_using_that_template(tmp_path: Path) -> None:
+    _site(tmp_path)
+    (tmp_path / "_templates" / "article.template").write_text(
+        "<article>{{ page.title }}{{ content }}</article>", encoding="utf-8"
+    )
+    (tmp_path / "page.md").write_text("# Page", encoding="utf-8")
+    (tmp_path / "article.md").write_text(
+        "---\ntitle: Article\nlayout: article\n---\n\n# Article",
+        encoding="utf-8",
+    )
+
+    with patch("docbuild.converter.pypandoc.convert_text", return_value="<p>Body</p>") as convert:
+        SiteBuilder(tmp_path).build()
+        (tmp_path / "_templates" / "page.template").write_text(
+            "<main>Updated {{ content }}</main>", encoding="utf-8"
+        )
+        SiteBuilder(tmp_path).build()
+
+    # Only page.md uses page.template; article.md uses article.template.
+    assert convert.call_count == 3
+
+
+def test_parent_template_change_rebuilds_only_dependent_documents(tmp_path: Path) -> None:
+    _site(
+        tmp_path,
+        template='{% extends "base.template" %}{% block main %}Page {{ content }}{% endblock %}',
+    )
+    (tmp_path / "_templates" / "base.template").write_text(
+        "{% block main %}Base{% endblock %}", encoding="utf-8"
+    )
+    (tmp_path / "_templates" / "standalone.template").write_text(
+        "<article>{{ content }}</article>", encoding="utf-8"
+    )
+    (tmp_path / "page.md").write_text("# Page", encoding="utf-8")
+    (tmp_path / "standalone.md").write_text(
+        "---\nlayout: standalone\n---\n\n# Standalone",
+        encoding="utf-8",
+    )
+
+    with patch("docbuild.converter.pypandoc.convert_text", return_value="<p>Body</p>") as convert:
+        SiteBuilder(tmp_path).build()
+        (tmp_path / "_templates" / "base.template").write_text(
+            "{% block main %}Changed base{% endblock %}", encoding="utf-8"
+        )
+        SiteBuilder(tmp_path).build()
+
+    # The page template inherits from base.template; standalone does not.
+    assert convert.call_count == 3
+
+
+def test_dynamic_template_reference_uses_conservative_signature(tmp_path: Path) -> None:
+    _site(tmp_path, template='{% include page.partial %}{{ content }}')
+    (tmp_path / "_templates" / "first.template").write_text("First", encoding="utf-8")
+    (tmp_path / "_templates" / "second.template").write_text("Second", encoding="utf-8")
+    (tmp_path / "page.md").write_text(
+        "---\npartial: first.template\n---\n\n# Body", encoding="utf-8"
+    )
+
+    with patch("docbuild.converter.pypandoc.convert_text", return_value="<p>Body</p>") as convert:
+        SiteBuilder(tmp_path).build()
+        (tmp_path / "_templates" / "second.template").write_text(
+            "Changed second", encoding="utf-8"
+        )
+        SiteBuilder(tmp_path).build()
+
+    # Dynamic includes cannot be resolved during static analysis, so all
+    # templates remain dependencies as a safe fallback.
+    assert convert.call_count == 2
+
+
+
 def test_failed_conversion_is_retried(tmp_path: Path) -> None:
     _site(tmp_path)
     (tmp_path / "page.md").write_text("# Body", encoding="utf-8")
