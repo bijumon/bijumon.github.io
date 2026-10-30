@@ -64,7 +64,7 @@ class DocumentConverter:
             "pandoc": pandoc_version,
         }
         digest = hashlib.sha256()
-        digest.update(b"docbuild-document-toolchain-v1\\0")
+        digest.update(b"docbuild-document-toolchain-v1\0")
         digest.update(source_digest.hexdigest().encode("ascii"))
         digest.update(b"\0")
         digest.update(
