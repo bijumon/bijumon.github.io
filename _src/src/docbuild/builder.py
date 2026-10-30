@@ -6,7 +6,7 @@ import shutil
 from datetime import date, datetime, time
 from pathlib import Path
 from typing import Any
-from urllib.parse import unquote, urlsplit
+from urllib.parse import quote, unquote, urlsplit
 
 from .config import DOCUMENT_FORMATS, OUTPUT_DIR, TEMPLATE_DIR, load_config
 from .converter import DocumentConverter
@@ -46,7 +46,8 @@ class SiteBuilder:
         """Validate and normalize a page URL as a site-root-relative path.
 
         Absolute and protocol-relative URLs are deliberately unsupported.
-        Query strings, fragments, whitespace, and path traversal are rejected.
+        Query strings, fragments, and path traversal are rejected. Characters
+        that are not valid unescaped in a URL path (such as spaces) are quoted.
         """
         if value is None or value == "":
             value = output_path
@@ -56,8 +57,6 @@ class SiteBuilder:
             raise BuildError(f"{message} (expected a string)")
         if not value or value.isspace():
             raise BuildError(f"{message} (empty or whitespace-only value)")
-        if value != value.strip() or any(char.isspace() for char in value):
-            raise BuildError(f"{message} (whitespace must be URL-encoded)")
         if any(ord(char) < 0x20 or ord(char) == 0x7F for char in value):
             raise BuildError(f"{message} (control characters are not allowed)")
         if value.startswith("//"):
@@ -81,7 +80,9 @@ class SiteBuilder:
         if not path:
             raise BuildError(f"{message} (path is empty)")
 
-        return path if path.startswith("/") else f"/{path}"
+        normalized = path if path.startswith("/") else f"/{path}"
+        return quote(normalized, safe="/%:@!        return path if path.startswith("/") else f"/{path}"
+'()*+,;=-._~")
 
     def _page_metadata(self, relative_path: str, entry: IndexedFile) -> dict[str, Any]:
         """Build the canonical metadata dictionary used for both page and site rendering."""
