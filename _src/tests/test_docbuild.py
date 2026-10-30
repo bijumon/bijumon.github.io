@@ -628,6 +628,70 @@ def test_site_page_catalog_change_rebuilds_unchanged_pages(tmp_path: Path) -> No
 
 
 
+
+def test_config_change_rebuilds_only_templates_using_that_key(tmp_path: Path) -> None:
+    _site(tmp_path, template="{{ site.name }}{{ content }}")
+    (tmp_path / "alpha.md").write_text("# Alpha", encoding="utf-8")
+    (tmp_path / "beta.md").write_text("# Beta", encoding="utf-8")
+    config = tmp_path / "_config.toml"
+
+    with patch("docbuild.converter.pypandoc.convert_text", return_value="<p>Body</p>") as convert:
+        SiteBuilder(tmp_path).build()
+
+        # Description is not referenced by the selected template.
+        config.write_text(
+            config.read_text(encoding="utf-8").replace(
+                'description = "Personal website and notes."',
+                'description = "Updated description."',
+            ),
+            encoding="utf-8",
+        )
+        SiteBuilder(tmp_path).build()
+        assert convert.call_count == 2
+
+        # The template does reference site.name, so changing it rebuilds both pages.
+        config.write_text(
+            config.read_text(encoding="utf-8").replace(
+                'name = "Notes"', 'name = "Updated Notes"'
+            ),
+            encoding="utf-8",
+        )
+        SiteBuilder(tmp_path).build()
+
+    assert convert.call_count == 4
+
+
+def test_config_key_dependency_includes_inherited_templates(tmp_path: Path) -> None:
+    _site(tmp_path, template='{% extends "base.template" %}{% block main %}{{ content }}{% endblock %}')
+    (tmp_path / "_templates" / "base.template").write_text(
+        "{{ site.author }}{% block main %}{% endblock %}", encoding="utf-8"
+    )
+    (tmp_path / "page.md").write_text("# Body", encoding="utf-8")
+    config = tmp_path / "_config.toml"
+
+    with patch("docbuild.converter.pypandoc.convert_text", return_value="<p>Body</p>") as convert:
+        SiteBuilder(tmp_path).build()
+        config.write_text(
+            config.read_text(encoding="utf-8").replace(
+                'description = "Personal website and notes."',
+                'description = "Updated description."',
+            ),
+            encoding="utf-8",
+        )
+        SiteBuilder(tmp_path).build()
+        assert convert.call_count == 1
+
+        config.write_text(
+            config.read_text(encoding="utf-8").replace(
+                'author = "Biju Punalor"', 'author = "New Author"'
+            ),
+            encoding="utf-8",
+        )
+        SiteBuilder(tmp_path).build()
+
+    assert convert.call_count == 2
+
+
 def test_site_catalog_change_does_not_rebuild_pages_without_catalog_dependency(
     tmp_path: Path,
 ) -> None:
