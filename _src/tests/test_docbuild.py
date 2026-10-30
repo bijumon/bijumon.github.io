@@ -433,6 +433,86 @@ def test_toolchain_change_rebuilds_documents_but_not_static_assets(
     copy.assert_not_called()
 
 
+def test_toolchain_fingerprint_covers_parser_and_indexer_modules(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from docbuild.converter import DocumentConverter
+
+    original_read_bytes = Path.read_bytes
+    loaded_modules: set[str] = set()
+
+    def track_module_reads(path: Path) -> bytes:
+        loaded_modules.add(path.name)
+        return original_read_bytes(path)
+
+    distributions: list[str] = []
+    monkeypatch.setattr(Path, "read_bytes", track_module_reads)
+    monkeypatch.setattr(
+        "docbuild.converter.version",
+        lambda name: distributions.append(name) or "1.0",
+    )
+    monkeypatch.setattr(
+        "docbuild.converter.pypandoc.get_pandoc_version",
+        lambda: "3.8",
+    )
+
+    signature = DocumentConverter.build_signature()
+
+    assert signature.startswith("document-toolchain-v1:")
+    assert {
+        "cache.py",
+        "discovery.py",
+        "frontmatter.py",
+        "indexer.py",
+    } <= loaded_modules
+    assert {"python-frontmatter", "PyYAML"} <= set(distributions)
+
+
+def test_toolchain_fingerprint_changes_when_frontmatter_dependency_changes(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from docbuild.converter import DocumentConverter
+
+    versions = {
+        "Jinja2": "3.1.0",
+        "MarkupSafe": "2.1.0",
+        "pypandoc": "1.13",
+        "python-frontmatter": "1.0",
+        "PyYAML": "6.0",
+    }
+    monkeypatch.setattr(
+        "docbuild.converter.version",
+        lambda name: versions[name],
+    )
+    monkeypatch.setattr(
+        "docbuild.converter.pypandoc.get_pandoc_version",
+        lambda: "3.8",
+    )
+
+    original = DocumentConverter.build_signature()
+    versions["python-frontmatter"] = "1.1"
+    changed = DocumentConverter.build_signature()
+
+    assert changed != original
+
+
+def test_build_graph_leaf_signature_uses_nul_separators() -> None:
+    import hashlib
+
+    graph = BuildGraph()
+    graph.add_node("source:page.md", "source", "source-v1")
+
+    digest = hashlib.sha256()
+    digest.update(b"source")
+    digest.update(b"\\0")
+    digest.update(b"source:page.md")
+    digest.update(b"\\0")
+    digest.update(b"source-v1")
+    digest.update(b"\\0")
+
+    assert graph.signature("source:page.md") == f"build-graph-v1:{digest.hexdigest()}"
+
+
 def test_changed_static_asset_does_not_rebuild_documents(tmp_path: Path) -> None:
     _site(tmp_path)
     (tmp_path / "page.md").write_text("# Body", encoding="utf-8")
