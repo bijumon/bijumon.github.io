@@ -9,7 +9,16 @@ import subprocess
 import sys
 import pytest
 
-from docbuild import BuildError, DocumentDiscovery, FileCache, FrontmatterReader, SiteBuilder
+from docbuild import (
+    BuildArtifact,
+    BuildError,
+    BuildGraph,
+    BuildPlanner,
+    DocumentDiscovery,
+    FileCache,
+    FrontmatterReader,
+    SiteBuilder,
+)
 from docbuild.config import CONFIG_DEFAULTS, load_config
 
 
@@ -398,6 +407,157 @@ def test_static_files_are_not_recopied_when_unchanged(tmp_path: Path) -> None:
     copy.assert_not_called()
 
 
+
+def test_toolchain_change_rebuilds_documents_but_not_static_assets(
+    tmp_path: Path,
+) -> None:
+    _site(tmp_path)
+    (tmp_path / "page.md").write_text("# Body", encoding="utf-8")
+    (tmp_path / "asset.txt").write_text("asset", encoding="utf-8")
+
+    with (
+        patch("docbuild.converter.pypandoc.convert_text", return_value="<p>Body</p>") as convert,
+        patch(
+            "docbuild.converter.DocumentConverter.build_signature",
+            side_effect=["toolchain-v1", "toolchain-v2"],
+        ),
+        patch("docbuild.builder.shutil.copy2", wraps=__import__("shutil").copy2) as copy,
+    ):
+        SiteBuilder(tmp_path).build()
+        convert.reset_mock()
+        copy.reset_mock()
+        SiteBuilder(tmp_path).build()
+
+    # A changed rendering toolchain invalidates HTML, not byte-for-byte copies.
+    convert.assert_called_once()
+    copy.assert_not_called()
+
+
+def test_toolchain_fingerprint_covers_parser_and_indexer_modules(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from docbuild.converter import DocumentConverter
+
+    original_read_bytes = Path.read_bytes
+    loaded_modules: set[str] = set()
+
+    def track_module_reads(path: Path) -> bytes:
+        loaded_modules.add(path.name)
+        return original_read_bytes(path)
+
+    distributions: list[str] = []
+    monkeypatch.setattr(Path, "read_bytes", track_module_reads)
+    monkeypatch.setattr(
+        "docbuild.converter.version",
+        lambda name: distributions.append(name) or "1.0",
+    )
+    monkeypatch.setattr(
+        "docbuild.converter.pypandoc.get_pandoc_version",
+        lambda: "3.8",
+    )
+
+    signature = DocumentConverter.build_signature()
+
+    assert signature.startswith("document-toolchain-v1:")
+    assert {
+        "cache.py",
+        "discovery.py",
+        "frontmatter.py",
+        "indexer.py",
+    } <= loaded_modules
+    assert {"python-frontmatter", "PyYAML"} <= set(distributions)
+
+
+def test_toolchain_fingerprint_changes_when_frontmatter_dependency_changes(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from docbuild.converter import DocumentConverter
+
+    versions = {
+        "Jinja2": "3.1.0",
+        "MarkupSafe": "2.1.0",
+        "pypandoc": "1.13",
+        "python-frontmatter": "1.0",
+        "PyYAML": "6.0",
+    }
+    monkeypatch.setattr(
+        "docbuild.converter.version",
+        lambda name: versions[name],
+    )
+    monkeypatch.setattr(
+        "docbuild.converter.pypandoc.get_pandoc_version",
+        lambda: "3.8",
+    )
+
+    original = DocumentConverter.build_signature()
+    versions["python-frontmatter"] = "1.1"
+    changed = DocumentConverter.build_signature()
+
+    assert changed != original
+
+
+def test_build_graph_leaf_signature_uses_nul_separators() -> None:
+    import hashlib
+
+    graph = BuildGraph()
+    graph.add_node("source:page.md", "source", "source-v1")
+
+    digest = hashlib.sha256()
+    digest.update(b"source")
+    digest.update(b"\0")
+    digest.update(b"source:page.md")
+    digest.update(b"\0")
+    digest.update(b"source-v1")
+    digest.update(b"\0")
+
+    assert graph.signature("source:page.md") == f"build-graph-v1:{digest.hexdigest()}"
+
+
+def test_changed_static_asset_does_not_rebuild_documents(tmp_path: Path) -> None:
+    _site(tmp_path)
+    (tmp_path / "page.md").write_text("# Body", encoding="utf-8")
+    asset = tmp_path / "assets" / "site.css"
+    asset.parent.mkdir()
+    asset.write_text("body { color: black; }", encoding="utf-8")
+
+    with (
+        patch("docbuild.converter.pypandoc.convert_text", return_value="<p>Body</p>") as convert,
+        patch("docbuild.builder.shutil.copy2", wraps=__import__("shutil").copy2) as copy,
+    ):
+        SiteBuilder(tmp_path).build()
+        convert.reset_mock()
+        copy.reset_mock()
+
+        asset.write_text("body { color: white; }", encoding="utf-8")
+        SiteBuilder(tmp_path).build()
+
+    convert.assert_not_called()
+    copy.assert_called_once_with(asset, tmp_path / "_site" / "assets" / "site.css")
+
+
+def test_missing_static_output_is_copied_without_rebuilding_documents(
+    tmp_path: Path,
+) -> None:
+    _site(tmp_path)
+    (tmp_path / "page.md").write_text("# Body", encoding="utf-8")
+    asset = tmp_path / "assets" / "site.css"
+    asset.parent.mkdir()
+    asset.write_text("body {}", encoding="utf-8")
+
+    with (
+        patch("docbuild.converter.pypandoc.convert_text", return_value="<p>Body</p>") as convert,
+        patch("docbuild.builder.shutil.copy2", wraps=__import__("shutil").copy2) as copy,
+    ):
+        SiteBuilder(tmp_path).build()
+        convert.reset_mock()
+        copy.reset_mock()
+        (tmp_path / "_site" / "assets" / "site.css").unlink()
+        SiteBuilder(tmp_path).build()
+
+    convert.assert_not_called()
+    copy.assert_called_once_with(asset, tmp_path / "_site" / "assets" / "site.css")
+
+
 def test_missing_output_is_regenerated_even_when_source_is_unchanged(tmp_path: Path) -> None:
     _site(tmp_path)
     (tmp_path / "page.md").write_text("# Body", encoding="utf-8")
@@ -419,6 +579,110 @@ def test_template_change_rebuilds_documents(tmp_path: Path) -> None:
             "<h1>{{ page.title }}</h1>{{ content }}", encoding="utf-8"
         )
         SiteBuilder(tmp_path).build()
+    assert convert.call_count == 2
+
+
+def test_unused_template_change_does_not_rebuild_documents(tmp_path: Path) -> None:
+    _site(tmp_path)
+    (tmp_path / "_templates" / "unused.template").write_text(
+        "<aside>Unused</aside>", encoding="utf-8"
+    )
+    (tmp_path / "page.md").write_text("# Body", encoding="utf-8")
+
+    with patch("docbuild.converter.pypandoc.convert_text", return_value="<h1>Body</h1>") as convert:
+        SiteBuilder(tmp_path).build()
+        (tmp_path / "_templates" / "unused.template").write_text(
+            "<aside>Changed but still unused</aside>", encoding="utf-8"
+        )
+        SiteBuilder(tmp_path).build()
+
+    assert convert.call_count == 1
+
+
+def test_template_change_rebuilds_only_documents_using_that_template(tmp_path: Path) -> None:
+    _site(tmp_path)
+    (tmp_path / "_templates" / "article.template").write_text(
+        "<article>{{ page.title }}{{ content }}</article>", encoding="utf-8"
+    )
+    (tmp_path / "page.md").write_text("# Page", encoding="utf-8")
+    (tmp_path / "article.md").write_text(
+        "---\ntitle: Article\nlayout: article\n---\n\n# Article",
+        encoding="utf-8",
+    )
+
+    with patch("docbuild.converter.pypandoc.convert_text", return_value="<p>Body</p>") as convert:
+        SiteBuilder(tmp_path).build()
+        (tmp_path / "_templates" / "page.template").write_text(
+            "<main>Updated {{ content }}</main>", encoding="utf-8"
+        )
+        SiteBuilder(tmp_path).build()
+
+    # Only page.md uses page.template; article.md uses article.template.
+    assert convert.call_count == 3
+
+
+def test_parent_template_change_rebuilds_only_dependent_documents(tmp_path: Path) -> None:
+    _site(
+        tmp_path,
+        template='{% extends "base.template" %}{% block main %}Page {{ content }}{% endblock %}',
+    )
+    (tmp_path / "_templates" / "base.template").write_text(
+        "{% block main %}Base{% endblock %}", encoding="utf-8"
+    )
+    (tmp_path / "_templates" / "standalone.template").write_text(
+        "<article>{{ content }}</article>", encoding="utf-8"
+    )
+    (tmp_path / "page.md").write_text("# Page", encoding="utf-8")
+    (tmp_path / "standalone.md").write_text(
+        "---\nlayout: standalone\n---\n\n# Standalone",
+        encoding="utf-8",
+    )
+
+    with patch("docbuild.converter.pypandoc.convert_text", return_value="<p>Body</p>") as convert:
+        SiteBuilder(tmp_path).build()
+        (tmp_path / "_templates" / "base.template").write_text(
+            "{% block main %}Changed base{% endblock %}", encoding="utf-8"
+        )
+        SiteBuilder(tmp_path).build()
+
+    # The page template inherits from base.template; standalone does not.
+    assert convert.call_count == 3
+
+
+def test_dynamic_template_reference_uses_conservative_signature(tmp_path: Path) -> None:
+    _site(tmp_path, template='{% include page.partial %}{{ content }}')
+    (tmp_path / "_templates" / "first.template").write_text("First", encoding="utf-8")
+    (tmp_path / "_templates" / "second.template").write_text("Second", encoding="utf-8")
+    (tmp_path / "page.md").write_text(
+        "---\npartial: first.template\n---\n\n# Body", encoding="utf-8"
+    )
+
+    with patch("docbuild.converter.pypandoc.convert_text", return_value="<p>Body</p>") as convert:
+        SiteBuilder(tmp_path).build()
+        (tmp_path / "_templates" / "second.template").write_text(
+            "Changed second", encoding="utf-8"
+        )
+        SiteBuilder(tmp_path).build()
+
+    # Dynamic includes cannot be resolved during static analysis, so all
+    # templates remain dependencies as a safe fallback.
+    assert convert.call_count == 2
+
+
+
+
+def test_reused_builder_refreshes_template_dependency_graph(tmp_path: Path) -> None:
+    _site(tmp_path)
+    (tmp_path / "page.md").write_text("# Body", encoding="utf-8")
+    builder = SiteBuilder(tmp_path)
+
+    with patch("docbuild.converter.pypandoc.convert_text", return_value="<h1>Body</h1>") as convert:
+        builder.build()
+        (tmp_path / "_templates" / "page.template").write_text(
+            "<h1>Changed {{ content }}</h1>", encoding="utf-8"
+        )
+        builder.build()
+
     assert convert.call_count == 2
 
 
@@ -521,6 +785,218 @@ def test_site_page_catalog_change_rebuilds_unchanged_pages(tmp_path: Path) -> No
     assert convert.call_count == 4
     alpha_output = (tmp_path / "_site" / "alpha.html").read_text(encoding="utf-8")
     assert "Bravo Updated" in alpha_output
+
+
+
+
+
+def test_build_graph_signature_includes_transitive_dependencies() -> None:
+    graph = BuildGraph()
+    graph.add_node("source:page.md", "document", "source-v1")
+    graph.add_node("template:base.template", "template", "base-v1")
+    graph.add_node("template:page.template", "template", "page-v1")
+    graph.add_node("output:page.html", "output", "render-v1")
+    graph.depends_on("template:page.template", "template:base.template")
+    graph.depends_on("output:page.html", "source:page.md")
+    graph.depends_on("output:page.html", "template:page.template")
+    original = graph.signature("output:page.html")
+
+    changed = BuildGraph()
+    changed.add_node("source:page.md", "document", "source-v1")
+    changed.add_node("template:base.template", "template", "base-v2")
+    changed.add_node("template:page.template", "template", "page-v1")
+    changed.add_node("output:page.html", "output", "render-v1")
+    changed.depends_on("template:page.template", "template:base.template")
+    changed.depends_on("output:page.html", "source:page.md")
+    changed.depends_on("output:page.html", "template:page.template")
+
+    assert changed.signature("output:page.html") != original
+
+
+def test_build_graph_detects_cycles() -> None:
+    graph = BuildGraph()
+    graph.add_node("a", "source", "a")
+    graph.add_node("b", "template", "b")
+    graph.depends_on("a", "b")
+    graph.depends_on("b", "a")
+
+    with pytest.raises(BuildError, match="dependency cycle"):
+        graph.signature("a")
+
+
+def test_build_planner_selects_missing_and_changed_outputs(tmp_path: Path) -> None:
+    graph = BuildGraph()
+    graph.add_node("source:page.md", "document", "source-v1")
+    graph.add_node("output:page.html", "output", "render-v1")
+    graph.add_node("output:new.html", "output", "render-v1")
+    graph.depends_on("output:page.html", "source:page.md")
+    graph.depends_on("output:new.html", "source:page.md")
+    signature = graph.signature("output:page.html")
+
+    plan = BuildPlanner().plan(
+        graph,
+        [
+            BuildArtifact(
+                node_key="output:page.html",
+                destination=tmp_path / "page.html",
+                built_signature=signature,
+                exists=True,
+            ),
+            BuildArtifact(
+                node_key="output:new.html",
+                destination=tmp_path / "new.html",
+                built_signature=None,
+                exists=False,
+            ),
+        ],
+    )
+
+    assert len(plan.tasks) == 1
+    assert plan.tasks[0].reason == "missing output"
+    assert len(plan.unchanged) == 1
+
+
+def test_builder_persists_effective_graph_signatures(tmp_path: Path) -> None:
+    _site(tmp_path)
+    (tmp_path / "page.md").write_text("# Body", encoding="utf-8")
+
+    with patch("docbuild.converter.pypandoc.convert_text", return_value="<p>Body</p>"):
+        SiteBuilder(tmp_path).build()
+
+    with FileCache(tmp_path / ".cache.db") as cache:
+        record = cache.get("page.md")
+    assert record is not None
+    assert record["built_graph_signature"].startswith("build-graph-v1:")
+
+
+def test_config_change_rebuilds_only_templates_using_that_key(tmp_path: Path) -> None:
+    _site(tmp_path, template="{{ site.name }}{{ content }}")
+    (tmp_path / "alpha.md").write_text("# Alpha", encoding="utf-8")
+    (tmp_path / "beta.md").write_text("# Beta", encoding="utf-8")
+    config = tmp_path / "_config.toml"
+
+    with patch("docbuild.converter.pypandoc.convert_text", return_value="<p>Body</p>") as convert:
+        SiteBuilder(tmp_path).build()
+
+        # Description is not referenced by the selected template.
+        config.write_text(
+            config.read_text(encoding="utf-8").replace(
+                'description = "Personal website and notes."',
+                'description = "Updated description."',
+            ),
+            encoding="utf-8",
+        )
+        SiteBuilder(tmp_path).build()
+        assert convert.call_count == 2
+
+        # The template does reference site.name, so changing it rebuilds both pages.
+        config.write_text(
+            config.read_text(encoding="utf-8").replace(
+                'name = "Notes"', 'name = "Updated Notes"'
+            ),
+            encoding="utf-8",
+        )
+        SiteBuilder(tmp_path).build()
+
+    assert convert.call_count == 4
+
+
+def test_config_key_dependency_includes_inherited_templates(tmp_path: Path) -> None:
+    _site(tmp_path, template='{% extends "base.template" %}{% block main %}{{ content }}{% endblock %}')
+    (tmp_path / "_templates" / "base.template").write_text(
+        "{{ site.author }}{% block main %}{% endblock %}", encoding="utf-8"
+    )
+    (tmp_path / "page.md").write_text("# Body", encoding="utf-8")
+    config = tmp_path / "_config.toml"
+
+    with patch("docbuild.converter.pypandoc.convert_text", return_value="<p>Body</p>") as convert:
+        SiteBuilder(tmp_path).build()
+        config.write_text(
+            config.read_text(encoding="utf-8").replace(
+                'description = "Personal website and notes."',
+                'description = "Updated description."',
+            ),
+            encoding="utf-8",
+        )
+        SiteBuilder(tmp_path).build()
+        assert convert.call_count == 1
+
+        config.write_text(
+            config.read_text(encoding="utf-8").replace(
+                'author = "Biju Punalor"', 'author = "New Author"'
+            ),
+            encoding="utf-8",
+        )
+        SiteBuilder(tmp_path).build()
+
+    assert convert.call_count == 2
+
+
+def test_site_catalog_change_does_not_rebuild_pages_without_catalog_dependency(
+    tmp_path: Path,
+) -> None:
+    _site(tmp_path, template="<title>{{ page.title }}</title>{{ content }}")
+    alpha = tmp_path / "alpha.md"
+    beta = tmp_path / "beta.md"
+    alpha.write_text("---\ntitle: Alpha\n---\n\nAlpha", encoding="utf-8")
+    beta.write_text("---\ntitle: Beta\n---\n\nBeta", encoding="utf-8")
+
+    with patch("docbuild.converter.pypandoc.convert_text", return_value="<p>Body</p>") as convert:
+        SiteBuilder(tmp_path).build()
+        beta.write_text("---\ntitle: Bravo\n---\n\nBeta", encoding="utf-8")
+        SiteBuilder(tmp_path).build()
+
+    # Beta changes; Alpha does not consume site.pages and remains untouched.
+    assert convert.call_count == 3
+
+
+def test_site_catalog_change_rebuilds_only_catalog_consumers(tmp_path: Path) -> None:
+    _site(tmp_path, template="<title>{{ page.title }}</title>{{ content }}")
+    (tmp_path / "_templates" / "catalog.template").write_text(
+        "{% for item in site.pages %}<a>{{ item.title }}</a>{% endfor %}{{ content }}",
+        encoding="utf-8",
+    )
+    alpha = tmp_path / "alpha.md"
+    beta = tmp_path / "beta.md"
+    catalog = tmp_path / "catalog.md"
+    alpha.write_text("---\ntitle: Alpha\n---\n\nAlpha", encoding="utf-8")
+    beta.write_text("---\ntitle: Beta\n---\n\nBeta", encoding="utf-8")
+    catalog.write_text("---\nlayout: catalog\n---\n\nCatalog", encoding="utf-8")
+
+    with patch("docbuild.converter.pypandoc.convert_text", return_value="<p>Body</p>") as convert:
+        SiteBuilder(tmp_path).build()
+        beta.write_text("---\ntitle: Bravo\n---\n\nBeta", encoding="utf-8")
+        SiteBuilder(tmp_path).build()
+
+    # Beta rebuilds itself; catalog rebuilds because site.pages changed;
+    # Alpha does not depend on the virtual catalog node.
+    assert convert.call_count == 5
+    output = (tmp_path / "_site" / "catalog.html").read_text(encoding="utf-8")
+    assert "<a>Bravo</a>" in output
+
+
+@pytest.mark.parametrize(
+    "template",
+    [
+        '{% for item in site["pages"] %}{{ item.title }}{% endfor %}',
+        '{% set context = site %}{% for item in context.pages %}{{ item.title }}{% endfor %}',
+    ],
+)
+def test_site_catalog_dependency_detects_mapping_and_aliased_access(
+    tmp_path: Path, template: str
+) -> None:
+    _site(tmp_path, template=template + "{{ content }}")
+    (tmp_path / "alpha.md").write_text("---\ntitle: Alpha\n---\n\nAlpha", encoding="utf-8")
+    (tmp_path / "beta.md").write_text("---\ntitle: Beta\n---\n\nBeta", encoding="utf-8")
+
+    with patch("docbuild.converter.pypandoc.convert_text", return_value="<p>Body</p>") as convert:
+        SiteBuilder(tmp_path).build()
+        (tmp_path / "beta.md").write_text(
+            "---\ntitle: Bravo\n---\n\nBeta", encoding="utf-8"
+        )
+        SiteBuilder(tmp_path).build()
+
+    assert convert.call_count == 4
 
 
 def test_markdown_conversion_uses_commonmark_with_pipe_tables_and_footnotes(tmp_path: Path) -> None:

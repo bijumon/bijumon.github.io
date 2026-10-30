@@ -31,6 +31,10 @@ class TemplateRenderer:
             raise BuildError(f"{source}: invalid layout name {layout!r}")
         return name
 
+    def template_name(self, metadata: dict[str, Any], source: Path) -> str:
+        """Return the validated Jinja2 template name selected by page metadata."""
+        return self._template_name(metadata.get("layout"), source)
+
     def render(
         self,
         source: Path,
@@ -43,7 +47,7 @@ class TemplateRenderer:
         SiteBuilder supplies site.pages with every discovered document, represented
         by frontmatter plus source/output paths and a public URL.
         """
-        name = self._template_name(metadata.get("layout"), source)
+        name = self.template_name(metadata, source)
         try:
             template = self.environment.get_template(name)
             return template.render(

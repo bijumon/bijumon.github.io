@@ -4,6 +4,7 @@ The public classes are re-exported here for convenient use by tests and callers.
 """
 
 from .builder import SiteBuilder
+from .build_graph import BuildArtifact, BuildGraph, BuildPlan, BuildPlanner, BuildTask
 from .cache import FileCache
 from .cli import main
 from .converter import DocumentConverter
@@ -15,7 +16,12 @@ from .renderer import TemplateRenderer
 from .reporter import Reporter
 
 __all__ = [
+    "BuildArtifact",
     "BuildError",
+    "BuildGraph",
+    "BuildPlan",
+    "BuildPlanner",
+    "BuildTask",
     "DocumentConverter",
     "DocumentDiscovery",
     "FileCache",

@@ -9,12 +9,14 @@ from typing import Any
 from urllib.parse import quote, unquote, urlsplit
 
 from .config import DOCUMENT_FORMATS, OUTPUT_DIR, TEMPLATE_DIR, load_config
+from .build_graph import BuildArtifact, BuildGraph, BuildPlanner
 from .converter import DocumentConverter
 from .discovery import DocumentDiscovery
 from .errors import BuildError
 from .frontmatter import FrontmatterReader
 from .indexer import FileIndexer, IndexedFile
 from .renderer import TemplateRenderer
+from .template_graph import TemplateDependencyGraph
 from .reporter import Reporter
 
 
@@ -30,6 +32,7 @@ class SiteBuilder:
         self.frontmatter = FrontmatterReader()
         self.converter = DocumentConverter()
         self.renderer = TemplateRenderer(self.template_dir)
+        self.template_graph = TemplateDependencyGraph(self.renderer.environment)
         self.indexer = FileIndexer(
             self.source,
             self.discovery,
@@ -187,10 +190,12 @@ class SiteBuilder:
         return {**site_metadata, "pages": pages}
 
     def build(self) -> None:
-        """Incrementally build changed documents and copy changed static files."""
+        """Plan and execute only outputs whose effective graph inputs changed."""
+        # Re-scan template dependencies on every invocation. This supports a
+        # long-lived SiteBuilder instance while ensuring changed templates are seen.
+        self.template_graph = TemplateDependencyGraph(self.renderer.environment)
         config = load_config(self.source)
         content_hash_max_bytes = config["content_hash_max_bytes"]
-        # Hash policy is an internal build setting, not public template metadata.
         site_metadata = {
             key: value
             for key, value in config.items()
@@ -198,7 +203,6 @@ class SiteBuilder:
         }
         files = self.discovery.files()
         self._check_output_collisions(files)
-        template_signature = self._template_signature()
 
         with self.indexer as indexer:
             indexed = indexer.scan(
@@ -210,8 +214,126 @@ class SiteBuilder:
                 page["source"]: page
                 for page in site["pages"]
             }
-            site_signature = self._site_signature(site)
-            self.output.mkdir(parents=True, exist_ok=True)
+
+            graph = BuildGraph()
+            graph.add_node(
+                "virtual:document.toolchain",
+                "toolchain",
+                self.converter.build_signature(),
+            )
+            graph.add_node(
+                "virtual:site.metadata",
+                "virtual",
+                self._site_signature(site_metadata),
+            )
+            graph.add_node(
+                "virtual:site.pages",
+                "virtual",
+                self._site_signature(site["pages"]),
+            )
+
+            # Build input nodes first so all dependency edges point to known nodes.
+            for key, value in sorted(site_metadata.items()):
+                graph.add_node(
+                    f"config:{key}",
+                    "config",
+                    self._site_signature({"present": True, "value": value}),
+                )
+
+            for relative_path, entry in indexed.items():
+                graph.add_node(
+                    f"source:{relative_path}",
+                    "document" if entry.kind == "document" else "asset",
+                    self._site_signature(entry.signature),
+                )
+
+            dynamic_templates: set[str] = set()
+            for relative_path, entry in indexed.items():
+                if entry.kind != "document":
+                    continue
+                metadata = page_metadata[relative_path]
+                template_name = self.renderer.template_name(metadata, entry.source)
+                template_nodes = self.template_graph.dependency_nodes(template_name)
+                if template_nodes is None:
+                    dynamic_templates.add(relative_path)
+                    continue
+                for name, (signature, dependencies) in template_nodes.items():
+                    graph.add_node(f"template:{name}", "template", signature)
+                    for dependency in dependencies:
+                        dependency_signature = template_nodes[dependency][0]
+                        graph.add_node(
+                            f"template:{dependency}",
+                            "template",
+                            dependency_signature,
+                        )
+                        graph.depends_on(
+                            f"template:{name}",
+                            f"template:{dependency}",
+                        )
+
+            global_template_signature: str | None = None
+            artifacts: list[BuildArtifact] = []
+            relative_by_node: dict[str, str] = {}
+            for source in files:
+                relative = source.relative_to(self.source).as_posix()
+                entry = indexed[relative]
+                if entry.kind == "document":
+                    destination = self._output_for(source)
+                    output_node = f"output:document:{relative}"
+                    graph.add_node(output_node, "output", "document-render-v1")
+                    graph.depends_on(output_node, f"source:{relative}")
+                    graph.depends_on(output_node, "virtual:document.toolchain")
+
+                    metadata = page_metadata[relative]
+                    template_name = self.renderer.template_name(metadata, source)
+                    if relative in dynamic_templates:
+                        if global_template_signature is None:
+                            global_template_signature = self._template_signature()
+                        graph.add_node(
+                            "virtual:templates.all",
+                            "virtual",
+                            global_template_signature,
+                        )
+                        graph.depends_on(output_node, "virtual:templates.all")
+                    else:
+                        graph.depends_on(output_node, f"template:{template_name}")
+
+                    metadata_keys, uses_site_pages = self.template_graph.site_dependencies(
+                        template_name
+                    )
+                    if metadata_keys is None:
+                        graph.depends_on(output_node, "virtual:site.metadata")
+                    else:
+                        for key in sorted(metadata_keys):
+                            # Include absent keys so adding a config value later
+                            # invalidates templates that already refer to it.
+                            key_signature = self._site_signature(
+                                {"present": key in site_metadata, "value": site_metadata.get(key)}
+                            )
+                            graph.add_node(f"config:{key}", "config", key_signature)
+                            graph.depends_on(output_node, f"config:{key}")
+                    if uses_site_pages:
+                        graph.depends_on(output_node, "virtual:site.pages")
+                else:
+                    destination = self.output / source.relative_to(self.source)
+                    output_node = f"output:asset:{relative}"
+                    graph.add_node(output_node, "output", "static-copy-v1")
+                    graph.depends_on(output_node, f"source:{relative}")
+
+                relative_by_node[output_node] = relative
+                artifacts.append(
+                    BuildArtifact(
+                        node_key=output_node,
+                        destination=destination,
+                        built_signature=entry.built_graph_signature,
+                        exists=destination.is_file(),
+                    )
+                )
+
+            plan = BuildPlanner().plan(graph, artifacts)
+            tasks = {task.node_key: task for task in plan.tasks}
+            for artifact in plan.unchanged:
+                self.reporter.info("Unchanged: %s", relative_by_node[artifact.node_key])
 
             for source in files:
                 relative = source.relative_to(self.source).as_posix()
@@ -219,11 +341,9 @@ class SiteBuilder:
                 if entry.kind != "document":
                     continue
 
-                destination = self._output_for(source)
-                if not indexer.needs_build(
-                    entry, destination, template_signature, site_signature
-                ):
-                    self.reporter.info("Unchanged: %s", relative)
+                output_node = f"output:document:{relative}"
+                task = tasks.get(output_node)
+                if task is None:
                     continue
 
                 if entry.body is None:
@@ -231,17 +351,17 @@ class SiteBuilder:
                 else:
                     body = entry.body
 
-                # Use the same normalized metadata object that appears in site.pages.
                 metadata = page_metadata[relative]
                 html = self.converter.convert(source, body)
                 rendered = self.renderer.render(source, metadata, html, site=site)
-                destination.parent.mkdir(parents=True, exist_ok=True)
-                destination.write_text(rendered, encoding="utf-8")
-                indexer.mark_built(entry, template_signature, site_signature)
+                task.destination.parent.mkdir(parents=True, exist_ok=True)
+                task.destination.write_text(rendered, encoding="utf-8")
+                indexer.mark_graph_built(entry, task.signature)
                 self.reporter.info(
-                    "Built %s -> %s",
+                    "Built %s -> %s (%s)",
                     relative,
-                    destination.relative_to(self.output).as_posix(),
+                    task.destination.relative_to(self.output).as_posix(),
+                    task.reason,
                 )
 
             for source in files:
@@ -250,17 +370,17 @@ class SiteBuilder:
                 if entry.kind == "document":
                     continue
 
-                destination = self.output / source.relative_to(self.source)
-                if not indexer.needs_build(
-                    entry, destination, template_signature, site_signature
-                ):
-                    self.reporter.info("Unchanged: %s", relative)
+                output_node = f"output:asset:{relative}"
+                task = tasks.get(output_node)
+                if task is None:
                     continue
 
-                destination.parent.mkdir(parents=True, exist_ok=True)
+                task.destination.parent.mkdir(parents=True, exist_ok=True)
                 try:
-                    shutil.copy2(source, destination)
+                    shutil.copy2(source, task.destination)
                 except OSError as exc:
-                    raise BuildError(f"cannot copy {source} to {destination}: {exc}") from exc
-                indexer.mark_built(entry, template_signature, site_signature)
-                self.reporter.info("Copied %s", relative)
+                    raise BuildError(
+                        f"cannot copy {source} to {task.destination}: {exc}"
+                    ) from exc
+                indexer.mark_graph_built(entry, task.signature)
+                self.reporter.info("Copied %s (%s)", relative, task.reason)
