@@ -6,6 +6,7 @@ import shutil
 from datetime import date, datetime, time
 from pathlib import Path
 from typing import Any
+from urllib.parse import unquote, urlsplit
 
 from .config import DOCUMENT_FORMATS, OUTPUT_DIR, TEMPLATE_DIR, load_config
 from .converter import DocumentConverter
@@ -39,6 +40,61 @@ class SiteBuilder:
     def _output_for(self, source: Path) -> Path:
         relative = source.relative_to(self.source)
         return (self.output / relative).with_suffix(".html")
+
+    @staticmethod
+    def _normalize_page_url(value: Any, output_path: str, source: str) -> str:
+        """Validate and normalize a page URL as a site-root-relative path.
+
+        Absolute and protocol-relative URLs are deliberately unsupported.
+        Query strings, fragments, whitespace, and path traversal are rejected.
+        """
+        if value is None or value == "":
+            value = output_path
+
+        message = f"{source}: frontmatter 'url' must be a site-relative path"
+        if not isinstance(value, str):
+            raise BuildError(f"{message} (expected a string)")
+        if not value or value.isspace():
+            raise BuildError(f"{message} (empty or whitespace-only value)")
+        if value != value.strip() or any(char.isspace() for char in value):
+            raise BuildError(f"{message} (whitespace must be URL-encoded)")
+        if any(ord(char) < 0x20 or ord(char) == 0x7F for char in value):
+            raise BuildError(f"{message} (control characters are not allowed)")
+        if value.startswith("//"):
+            raise BuildError(f"{message} (protocol-relative URLs are not supported)")
+        if "?" in value or "#" in value:
+            raise BuildError(f"{message} (query strings and fragments are not supported)")
+
+        try:
+            parsed = urlsplit(value)
+        except ValueError as exc:
+            raise BuildError(f"{message}: {exc}") from exc
+        if parsed.scheme or parsed.netloc:
+            raise BuildError(f"{message} (absolute URLs are not supported)")
+
+        path = parsed.path
+        decoded_path = unquote(path)
+        if "\\\\" in path or "\\\\" in decoded_path:
+            raise BuildError(f"{message} (backslashes are not allowed)")
+        if any(segment == ".." for segment in decoded_path.split("/")):
+            raise BuildError(f"{message} (parent-directory segments are not allowed)")
+        if not path:
+            raise BuildError(f"{message} (path is empty)")
+
+        return path if path.startswith("/") else f"/{path}"
+
+    def _page_metadata(self, relative_path: str, entry: IndexedFile) -> dict[str, Any]:
+        """Build the canonical metadata dictionary used for both page and site rendering."""
+        output_path = Path(relative_path).with_suffix(".html").as_posix()
+        page = dict(entry.frontmatter)
+        page["source"] = relative_path
+        page["output"] = output_path
+        page["url"] = self._normalize_page_url(
+            page.get("url"),
+            output_path,
+            relative_path,
+        )
+        return page
 
     def _template_signature(self) -> str:
         """Hash all template paths and contents, including nested templates."""
@@ -123,17 +179,11 @@ class SiteBuilder:
         site_metadata: dict[str, Any],
     ) -> dict[str, Any]:
         """Build deterministic site metadata and a list of every source page."""
-        pages: list[dict[str, Any]] = []
-        for relative_path, entry in sorted(indexed.items()):
-            if entry.kind != "document":
-                continue
-            output_path = Path(relative_path).with_suffix(".html").as_posix()
-            page = dict(entry.frontmatter)
-            page["source"] = relative_path
-            page["output"] = output_path
-            if not isinstance(page.get("url"), str) or not page.get("url"):
-                page["url"] = output_path
-            pages.append(page)
+        pages = [
+            self._page_metadata(relative_path, entry)
+            for relative_path, entry in sorted(indexed.items())
+            if entry.kind == "document"
+        ]
         return {**site_metadata, "pages": pages}
 
     def build(self) -> None:
@@ -156,6 +206,10 @@ class SiteBuilder:
                 content_hash_max_bytes=content_hash_max_bytes,
             )
             site = self._site_context(indexed, site_metadata)
+            page_metadata = {
+                page["source"]: page
+                for page in site["pages"]
+            }
             site_signature = self._site_signature(site)
             self.output.mkdir(parents=True, exist_ok=True)
 
@@ -173,10 +227,12 @@ class SiteBuilder:
                     continue
 
                 if entry.body is None:
-                    metadata, body = self.frontmatter.read(source)
+                    _, body = self.frontmatter.read(source)
                 else:
-                    metadata, body = entry.frontmatter, entry.body
+                    body = entry.body
 
+                # Use the same normalized metadata object that appears in site.pages.
+                metadata = page_metadata[relative]
                 html = self.converter.convert(source, body)
                 rendered = self.renderer.render(source, metadata, html, site=site)
                 destination.parent.mkdir(parents=True, exist_ok=True)
