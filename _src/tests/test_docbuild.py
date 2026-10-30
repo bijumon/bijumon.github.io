@@ -677,3 +677,32 @@ def test_page_url_change_rebuilds_pages_that_use_the_page_catalog(tmp_path: Path
     assert '<a href="/notes/new.html">Beta</a>' in beta_output
     assert (tmp_path / "_site" / "beta.html").is_file()
     assert not (tmp_path / "_site" / "notes" / "new.html").exists()
+
+
+
+def test_page_url_percent_encodes_spaces_in_source_and_custom_paths(
+    tmp_path: Path,
+) -> None:
+    _site(tmp_path, template="<page-url>{{ page.url }}</page-url>{{ content }}")
+    (tmp_path / "Blender learning path.md").write_text(
+        "# Blender", encoding="utf-8"
+    )
+    custom = tmp_path / "notes" / "Blender learning path.md"
+    custom.parent.mkdir()
+    custom.write_text(
+        '---\ntitle: Blender\nurl: "notes/Blender learning path.html"\n---\n\n'
+        "# Blender",
+        encoding="utf-8",
+    )
+
+    with patch("docbuild.converter.pypandoc.convert_text", return_value="<p>Blender</p>"):
+        SiteBuilder(tmp_path).build()
+
+    default_output = (
+        tmp_path / "_site" / "Blender learning path.html"
+    ).read_text(encoding="utf-8")
+    custom_output = (
+        tmp_path / "_site" / "notes" / "Blender learning path.html"
+    ).read_text(encoding="utf-8")
+    assert "<page-url>/Blender%20learning%20path.html</page-url>" in default_output
+    assert "<page-url>/notes/Blender%20learning%20path.html</page-url>" in custom_output
