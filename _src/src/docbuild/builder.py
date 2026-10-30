@@ -74,7 +74,7 @@ class SiteBuilder:
 
         path = parsed.path
         decoded_path = unquote(path)
-        if "\\\\" in path or "\\\\" in decoded_path:
+        if "\\" in path or "\\" in decoded_path:
             raise BuildError(f"{message} (backslashes are not allowed)")
         if any(segment == ".." for segment in decoded_path.split("/")):
             raise BuildError(f"{message} (parent-directory segments are not allowed)")
