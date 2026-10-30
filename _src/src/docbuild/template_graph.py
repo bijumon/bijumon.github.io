@@ -141,6 +141,39 @@ class TemplateDependencyGraph:
 
         return (None if all_metadata else frozenset(metadata_keys), uses_site_pages)
 
+    def dependency_nodes(
+        self, template_name: str
+    ) -> dict[str, tuple[str, tuple[str, ...]]] | None:
+        """Return source signatures and edges for the static template closure.
+
+        Each mapping value contains a template-content SHA-256 digest and the
+        names of templates it directly references. None indicates a dynamic
+        reference, for which the caller must use the conservative all-templates
+        virtual node instead.
+        """
+        pending = [template_name]
+        visited: set[str] = set()
+        has_dynamic_reference = False
+
+        while pending:
+            current = pending.pop()
+            if current in visited:
+                continue
+            visited.add(current)
+            dependencies, dynamic = self._load(current)
+            has_dynamic_reference = has_dynamic_reference or dynamic
+            pending.extend(dependencies)
+
+        if has_dynamic_reference:
+            return None
+
+        result: dict[str, tuple[str, tuple[str, ...]]] = {}
+        for name in sorted(visited):
+            source = self._sources[name]
+            digest = hashlib.sha256(source.encode("utf-8")).hexdigest()
+            result[name] = (digest, self._dependencies[name])
+        return result
+
     def uses_site_pages(self, template_name: str) -> bool:
         """Return whether a template or any static dependency reads site.pages."""
         return self.site_dependencies(template_name)[1]
