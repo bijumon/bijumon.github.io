@@ -407,6 +407,35 @@ def test_static_files_are_not_recopied_when_unchanged(tmp_path: Path) -> None:
     copy.assert_not_called()
 
 
+def test_timestamp_only_changes_do_not_rebuild_hashed_sources(tmp_path: Path) -> None:
+    _site(tmp_path)
+    document = tmp_path / "page.md"
+    document.write_text("# Body", encoding="utf-8")
+    asset = tmp_path / "asset.txt"
+    asset.write_text("asset", encoding="utf-8")
+
+    with (
+        patch("docbuild.converter.pypandoc.convert_text", return_value="<h1>Body</h1>") as convert,
+        patch("docbuild.builder.shutil.copy2", wraps=__import__("shutil").copy2) as copy,
+    ):
+        SiteBuilder(tmp_path).build()
+        convert.reset_mock()
+        copy.reset_mock()
+
+        # A fresh Git checkout changes filesystem timestamps without changing content.
+        for path in (document, asset):
+            stat = path.stat()
+            os.utime(
+                path,
+                ns=(stat.st_atime_ns, stat.st_mtime_ns + 2_000_000_000),
+            )
+
+        SiteBuilder(tmp_path).build()
+
+    convert.assert_not_called()
+    copy.assert_not_called()
+
+
 
 def test_toolchain_change_rebuilds_documents_but_not_static_assets(
     tmp_path: Path,
