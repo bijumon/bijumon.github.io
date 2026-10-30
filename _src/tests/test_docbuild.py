@@ -408,6 +408,31 @@ def test_static_files_are_not_recopied_when_unchanged(tmp_path: Path) -> None:
 
 
 
+def test_toolchain_change_rebuilds_documents_but_not_static_assets(
+    tmp_path: Path,
+) -> None:
+    _site(tmp_path)
+    (tmp_path / "page.md").write_text("# Body", encoding="utf-8")
+    (tmp_path / "asset.txt").write_text("asset", encoding="utf-8")
+
+    with (
+        patch("docbuild.converter.pypandoc.convert_text", return_value="<p>Body</p>") as convert,
+        patch(
+            "docbuild.converter.DocumentConverter.build_signature",
+            side_effect=["toolchain-v1", "toolchain-v2"],
+        ),
+        patch("docbuild.builder.shutil.copy2", wraps=__import__("shutil").copy2) as copy,
+    ):
+        SiteBuilder(tmp_path).build()
+        convert.reset_mock()
+        copy.reset_mock()
+        SiteBuilder(tmp_path).build()
+
+    # A changed rendering toolchain invalidates HTML, not byte-for-byte copies.
+    convert.assert_called_once()
+    copy.assert_not_called()
+
+
 def test_changed_static_asset_does_not_rebuild_documents(tmp_path: Path) -> None:
     _site(tmp_path)
     (tmp_path / "page.md").write_text("# Body", encoding="utf-8")
