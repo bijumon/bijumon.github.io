@@ -504,11 +504,11 @@ def test_build_graph_leaf_signature_uses_nul_separators() -> None:
 
     digest = hashlib.sha256()
     digest.update(b"source")
-    digest.update(b"\\0")
+    digest.update(b"\0")
     digest.update(b"source:page.md")
-    digest.update(b"\\0")
+    digest.update(b"\0")
     digest.update(b"source-v1")
-    digest.update(b"\\0")
+    digest.update(b"\0")
 
     assert graph.signature("source:page.md") == f"build-graph-v1:{digest.hexdigest()}"
 
