@@ -243,9 +243,6 @@ class SiteBuilder:
                 )
 
             dynamic_templates: set[str] = set()
-            template_nodes_by_document: dict[
-                str, dict[str, tuple[str, tuple[str, ...]]]
-            ] = {}
             for relative_path, entry in indexed.items():
                 if entry.kind != "document":
                     continue
@@ -255,7 +252,6 @@ class SiteBuilder:
                 if template_nodes is None:
                     dynamic_templates.add(relative_path)
                     continue
-                template_nodes_by_document[relative_path] = template_nodes
                 for name, (signature, dependencies) in template_nodes.items():
                     graph.add_node(f"template:{name}", "template", signature)
                     for dependency in dependencies:
