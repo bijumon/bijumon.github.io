@@ -4,7 +4,7 @@ else
 COMPOSE ?= docker compose
 endif
 
-.PHONY: build image serve
+.PHONY: build image serve test
 
 # Build the site (also ensure the container image exists and is current).
 build: image
@@ -14,10 +14,11 @@ build: image
 image:
 	$(COMPOSE) build build
 
-# Build the site, then start the LiveReload server.
-serve: build
+# Build once, then serve and incrementally rebuild through docbuild-serve.
+# Do not depend on "build": the development server owns its initial build.
+serve:
 	$(COMPOSE) run --rm --service-ports serve
 
-# Run the tests for docbuild.py
-test: 
+# Run the docbuild test suite.
+test:
 	$(COMPOSE) run --rm test
