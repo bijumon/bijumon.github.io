@@ -15,6 +15,7 @@ from .errors import BuildError
 from .frontmatter import FrontmatterReader
 from .indexer import FileIndexer, IndexedFile
 from .renderer import TemplateRenderer
+from .template_graph import TemplateDependencyGraph
 from .reporter import Reporter
 
 
@@ -30,6 +31,7 @@ class SiteBuilder:
         self.frontmatter = FrontmatterReader()
         self.converter = DocumentConverter()
         self.renderer = TemplateRenderer(self.template_dir)
+        self.template_graph = TemplateDependencyGraph(self.renderer.environment)
         self.indexer = FileIndexer(
             self.source,
             self.discovery,
@@ -198,7 +200,7 @@ class SiteBuilder:
         }
         files = self.discovery.files()
         self._check_output_collisions(files)
-        template_signature = self._template_signature()
+        global_template_signature: str | None = None
 
         with self.indexer as indexer:
             indexed = indexer.scan(
@@ -211,6 +213,21 @@ class SiteBuilder:
                 for page in site["pages"]
             }
             site_signature = self._site_signature(site)
+            template_signatures: dict[str, str] = {}
+            for relative_path, entry in indexed.items():
+                if entry.kind != "document":
+                    continue
+                metadata = page_metadata[relative_path]
+                template_name = self.renderer.template_name(metadata, entry.source)
+                signature = self.template_graph.signature(template_name)
+                if signature is None:
+                    # Dynamic Jinja2 references cannot be resolved statically.
+                    # Fall back to the complete template set for correctness.
+                    if global_template_signature is None:
+                        global_template_signature = self._template_signature()
+                    signature = global_template_signature
+                template_signatures[relative_path] = signature
+
             self.output.mkdir(parents=True, exist_ok=True)
 
             for source in files:
@@ -221,7 +238,7 @@ class SiteBuilder:
 
                 destination = self._output_for(source)
                 if not indexer.needs_build(
-                    entry, destination, template_signature, site_signature
+                    entry, destination, template_signatures[relative], site_signature
                 ):
                     self.reporter.info("Unchanged: %s", relative)
                     continue
@@ -237,7 +254,7 @@ class SiteBuilder:
                 rendered = self.renderer.render(source, metadata, html, site=site)
                 destination.parent.mkdir(parents=True, exist_ok=True)
                 destination.write_text(rendered, encoding="utf-8")
-                indexer.mark_built(entry, template_signature, site_signature)
+                indexer.mark_built(entry, template_signatures[relative], site_signature)
                 self.reporter.info(
                     "Built %s -> %s",
                     relative,
@@ -252,7 +269,7 @@ class SiteBuilder:
 
                 destination = self.output / source.relative_to(self.source)
                 if not indexer.needs_build(
-                    entry, destination, template_signature, site_signature
+                    entry, destination, "", site_signature
                 ):
                     self.reporter.info("Unchanged: %s", relative)
                     continue
@@ -262,5 +279,5 @@ class SiteBuilder:
                     shutil.copy2(source, destination)
                 except OSError as exc:
                     raise BuildError(f"cannot copy {source} to {destination}: {exc}") from exc
-                indexer.mark_built(entry, template_signature, site_signature)
+                indexer.mark_built(entry, "", site_signature)
                 self.reporter.info("Copied %s", relative)
