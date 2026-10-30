@@ -293,5 +293,5 @@ class SiteBuilder:
                     shutil.copy2(source, destination)
                 except OSError as exc:
                     raise BuildError(f"cannot copy {source} to {destination}: {exc}") from exc
-                indexer.mark_built(entry, "", site_signature)
+                indexer.mark_built(entry, "", "")
                 self.reporter.info("Copied %s", relative)
