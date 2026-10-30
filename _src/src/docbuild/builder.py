@@ -225,7 +225,7 @@ class SiteBuilder:
                     # Fall back to the complete template set for correctness.
                     if global_template_signature is None:
                         global_template_signature = self._template_signature()
-                    signature = global_template_signature
+                    signature = f"template-global-v1:{global_template_signature}"
                 template_signatures[relative_path] = signature
 
             self.output.mkdir(parents=True, exist_ok=True)
