@@ -217,6 +217,11 @@ class SiteBuilder:
 
             graph = BuildGraph()
             graph.add_node(
+                "virtual:document.toolchain",
+                "toolchain",
+                self.converter.build_signature(),
+            )
+            graph.add_node(
                 "virtual:site.metadata",
                 "virtual",
                 self._site_signature(site_metadata),
@@ -277,6 +282,7 @@ class SiteBuilder:
                     output_node = f"output:document:{relative}"
                     graph.add_node(output_node, "output", "document-render-v1")
                     graph.depends_on(output_node, f"source:{relative}")
+                    graph.depends_on(output_node, "virtual:document.toolchain")
 
                     metadata = page_metadata[relative]
                     template_name = self.renderer.template_name(metadata, source)
