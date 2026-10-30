@@ -23,6 +23,7 @@ class TemplateDependencyGraph:
         self._dynamic: set[str] = set()
         self._signatures: dict[str, str | None] = {}
         self._site_pages: dict[str, bool] = {}
+        self._site_metadata_keys: dict[str, frozenset[str] | None] = {}
 
     def _load(self, name: str) -> tuple[tuple[str, ...], bool]:
         """Parse one template and cache its source and outgoing dependency edges."""
@@ -41,7 +42,7 @@ class TemplateDependencyGraph:
 
         dependencies: set[str] = set()
         dynamic = False
-        uses_site_pages = self._references_site_pages(syntax_tree)
+        site_metadata_keys, uses_site_pages = self._site_references(syntax_tree)
         for reference in meta.find_referenced_templates(syntax_tree):
             if reference is None:
                 dynamic = True
@@ -54,48 +55,72 @@ class TemplateDependencyGraph:
         if dynamic:
             self._dynamic.add(name)
         self._site_pages[name] = uses_site_pages
+        self._site_metadata_keys[name] = site_metadata_keys
         return result, dynamic
 
     @staticmethod
-    def _references_site_pages(syntax_tree: nodes.Template) -> bool:
-        """Detect direct and potentially indirect reads of the site page catalog.
+    def _site_references(
+        syntax_tree: nodes.Template,
+    ) -> tuple[frozenset[str] | None, bool]:
+        """Find statically identifiable site metadata keys and catalog use.
 
-        Direct `site.pages` and `site["pages"]` accesses are recognized.
-        Other uses of the `site` object are treated conservatively when their
-        meaning cannot be established statically (for example, assigning it to
-        another variable or passing it to a filter).
+        A None key set means the template may inspect the site mapping
+        dynamically, so every metadata key is treated as a dependency. Dynamic
+        or indirect uses also conservatively depend on site.pages.
         """
-        direct_reference = False
-        ambiguous_reference = False
+        metadata_keys: set[str] = set()
+        uses_site_pages = False
+        all_metadata = False
+        mapping_methods = {
+            "get", "items", "keys", "values", "copy", "update", "pop", "setdefault"
+        }
 
         def visit(node: nodes.Node) -> None:
-            nonlocal direct_reference, ambiguous_reference
+            nonlocal uses_site_pages, all_metadata
             for child in node.iter_child_nodes():
                 if isinstance(child, nodes.Name) and child.name == "site":
                     if isinstance(node, nodes.Getattr) and node.node is child:
                         if node.attr == "pages":
-                            direct_reference = True
+                            uses_site_pages = True
+                        elif node.attr in mapping_methods:
+                            all_metadata = True
+                            uses_site_pages = True
+                        else:
+                            metadata_keys.add(node.attr)
                     elif isinstance(node, nodes.Getitem) and node.node is child:
-                        if (
-                            isinstance(node.arg, nodes.Const)
-                            and node.arg.value == "pages"
-                        ):
-                            direct_reference = True
-                        elif not isinstance(node.arg, nodes.Const):
-                            ambiguous_reference = True
+                        if isinstance(node.arg, nodes.Const):
+                            key = node.arg.value
+                            if key == "pages":
+                                uses_site_pages = True
+                            elif isinstance(key, str):
+                                metadata_keys.add(key)
+                            else:
+                                all_metadata = True
+                                uses_site_pages = True
+                        else:
+                            all_metadata = True
+                            uses_site_pages = True
                     else:
-                        ambiguous_reference = True
+                        # Aliases, filters, tests, and other indirect access
+                        # can expose any key in the site mapping.
+                        all_metadata = True
+                        uses_site_pages = True
                 visit(child)
 
         visit(syntax_tree)
-        return direct_reference or ambiguous_reference
+        return (None if all_metadata else frozenset(metadata_keys), uses_site_pages)
 
-    def uses_site_pages(self, template_name: str) -> bool:
-        """Return whether a template or any static dependency reads site.pages.
+    def site_dependencies(
+        self, template_name: str
+    ) -> tuple[frozenset[str] | None, bool]:
+        """Return (metadata keys, uses site.pages) for a template dependency closure.
 
-        Dynamic template references are conservatively considered dependent on
-        the page catalog because their contents are not statically knowable.
+        A None metadata-key set means all site metadata is relevant. Dynamic
+        includes are conservative because their contents cannot be inspected.
         """
+        metadata_keys: set[str] = set()
+        all_metadata = False
+        uses_site_pages = False
         pending = [template_name]
         visited: set[str] = set()
 
@@ -105,11 +130,20 @@ class TemplateDependencyGraph:
                 continue
             visited.add(current)
             dependencies, dynamic = self._load(current)
-            if dynamic or self._site_pages[current]:
-                return True
+            current_keys = self._site_metadata_keys[current]
+            if dynamic or current_keys is None:
+                all_metadata = True
+                uses_site_pages = True
+            else:
+                metadata_keys.update(current_keys)
+            uses_site_pages = uses_site_pages or self._site_pages[current]
             pending.extend(dependencies)
 
-        return False
+        return (None if all_metadata else frozenset(metadata_keys), uses_site_pages)
+
+    def uses_site_pages(self, template_name: str) -> bool:
+        """Return whether a template or any static dependency reads site.pages."""
+        return self.site_dependencies(template_name)[1]
 
     def signature(self, template_name: str) -> str | None:
         """Return a stable signature, or None if a dynamic reference is present."""
