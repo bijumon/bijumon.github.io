@@ -594,6 +594,7 @@ def test_missing_or_empty_page_url_defaults_to_output_path(
         '"notes/../private.html"',
         '"../python.html"',
         '"notes/%2e%2e/private.html"',
+        '"notes\\\\python.html"',
         '"notes/python.html?draft=1"',
         '"notes/python.html#section"',
         "12",
