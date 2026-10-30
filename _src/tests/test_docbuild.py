@@ -627,6 +627,74 @@ def test_site_page_catalog_change_rebuilds_unchanged_pages(tmp_path: Path) -> No
     assert "Bravo Updated" in alpha_output
 
 
+
+def test_site_catalog_change_does_not_rebuild_pages_without_catalog_dependency(
+    tmp_path: Path,
+) -> None:
+    _site(tmp_path, template="<title>{{ page.title }}</title>{{ content }}")
+    alpha = tmp_path / "alpha.md"
+    beta = tmp_path / "beta.md"
+    alpha.write_text("---\ntitle: Alpha\n---\n\nAlpha", encoding="utf-8")
+    beta.write_text("---\ntitle: Beta\n---\n\nBeta", encoding="utf-8")
+
+    with patch("docbuild.converter.pypandoc.convert_text", return_value="<p>Body</p>") as convert:
+        SiteBuilder(tmp_path).build()
+        beta.write_text("---\ntitle: Bravo\n---\n\nBeta", encoding="utf-8")
+        SiteBuilder(tmp_path).build()
+
+    # Beta changes; Alpha does not consume site.pages and remains untouched.
+    assert convert.call_count == 3
+
+
+def test_site_catalog_change_rebuilds_only_catalog_consumers(tmp_path: Path) -> None:
+    _site(tmp_path, template="<title>{{ page.title }}</title>{{ content }}")
+    (tmp_path / "_templates" / "catalog.template").write_text(
+        "{% for item in site.pages %}<a>{{ item.title }}</a>{% endfor %}{{ content }}",
+        encoding="utf-8",
+    )
+    alpha = tmp_path / "alpha.md"
+    beta = tmp_path / "beta.md"
+    catalog = tmp_path / "catalog.md"
+    alpha.write_text("---\ntitle: Alpha\n---\n\nAlpha", encoding="utf-8")
+    beta.write_text("---\ntitle: Beta\n---\n\nBeta", encoding="utf-8")
+    catalog.write_text("---\nlayout: catalog\n---\n\nCatalog", encoding="utf-8")
+
+    with patch("docbuild.converter.pypandoc.convert_text", return_value="<p>Body</p>") as convert:
+        SiteBuilder(tmp_path).build()
+        beta.write_text("---\ntitle: Bravo\n---\n\nBeta", encoding="utf-8")
+        SiteBuilder(tmp_path).build()
+
+    # Beta rebuilds itself; catalog rebuilds because site.pages changed;
+    # Alpha does not depend on the virtual catalog node.
+    assert convert.call_count == 5
+    output = (tmp_path / "_site" / "catalog.html").read_text(encoding="utf-8")
+    assert "<a>Bravo</a>" in output
+
+
+@pytest.mark.parametrize(
+    "template",
+    [
+        '{% for item in site["pages"] %}{{ item.title }}{% endfor %}',
+        '{% set context = site %}{% for item in context.pages %}{{ item.title }}{% endfor %}',
+    ],
+)
+def test_site_catalog_dependency_detects_mapping_and_aliased_access(
+    tmp_path: Path, template: str
+) -> None:
+    _site(tmp_path, template=template + "{{ content }}")
+    (tmp_path / "alpha.md").write_text("---\ntitle: Alpha\n---\n\nAlpha", encoding="utf-8")
+    (tmp_path / "beta.md").write_text("---\ntitle: Beta\n---\n\nBeta", encoding="utf-8")
+
+    with patch("docbuild.converter.pypandoc.convert_text", return_value="<p>Body</p>") as convert:
+        SiteBuilder(tmp_path).build()
+        (tmp_path / "beta.md").write_text(
+            "---\ntitle: Bravo\n---\n\nBeta", encoding="utf-8"
+        )
+        SiteBuilder(tmp_path).build()
+
+    assert convert.call_count == 4
+
+
 def test_markdown_conversion_uses_commonmark_with_pipe_tables_and_footnotes(tmp_path: Path) -> None:
     from docbuild.converter import DocumentConverter
 
