@@ -9,8 +9,7 @@ import subprocess
 import sys
 import pytest
 
-from docbuild import BuildError, DocumentDiscovery, FileCache, FrontmatterReader, SiteBuilder
-from docbuild.config import CONFIG_DEFAULTS, load_config
+from docbuild import (\n    BuildArtifact, BuildError, BuildGraph, BuildPlanner, DocumentDiscovery,\n    FileCache, FrontmatterReader, SiteBuilder,\n)\nfrom docbuild.config import CONFIG_DEFAULTS, load_config
 
 
 def _site(tmp_path: Path, template: str = "<title>{{ page.title }}</title>{{ content }}") -> None:
@@ -673,6 +672,84 @@ def test_site_page_catalog_change_rebuilds_unchanged_pages(tmp_path: Path) -> No
     assert "Bravo Updated" in alpha_output
 
 
+
+
+
+def test_build_graph_signature_includes_transitive_dependencies() -> None:
+    graph = BuildGraph()
+    graph.add_node("source:page.md", "document", "source-v1")
+    graph.add_node("template:base.template", "template", "base-v1")
+    graph.add_node("template:page.template", "template", "page-v1")
+    graph.add_node("output:page.html", "output", "render-v1")
+    graph.depends_on("template:page.template", "template:base.template")
+    graph.depends_on("output:page.html", "source:page.md")
+    graph.depends_on("output:page.html", "template:page.template")
+    original = graph.signature("output:page.html")
+
+    changed = BuildGraph()
+    changed.add_node("source:page.md", "document", "source-v1")
+    changed.add_node("template:base.template", "template", "base-v2")
+    changed.add_node("template:page.template", "template", "page-v1")
+    changed.add_node("output:page.html", "output", "render-v1")
+    changed.depends_on("template:page.template", "template:base.template")
+    changed.depends_on("output:page.html", "source:page.md")
+    changed.depends_on("output:page.html", "template:page.template")
+
+    assert changed.signature("output:page.html") != original
+
+
+def test_build_graph_detects_cycles() -> None:
+    graph = BuildGraph()
+    graph.add_node("a", "source", "a")
+    graph.add_node("b", "template", "b")
+    graph.depends_on("a", "b")
+    graph.depends_on("b", "a")
+
+    with pytest.raises(BuildError, match="dependency cycle"):
+        graph.signature("a")
+
+
+def test_build_planner_selects_missing_and_changed_outputs(tmp_path: Path) -> None:
+    graph = BuildGraph()
+    graph.add_node("source:page.md", "document", "source-v1")
+    graph.add_node("output:page.html", "output", "render-v1")
+    graph.depends_on("output:page.html", "source:page.md")
+    signature = graph.signature("output:page.html")
+
+    plan = BuildPlanner().plan(
+        graph,
+        [
+            BuildArtifact(
+                node_key="output:page.html",
+                destination=tmp_path / "page.html",
+                built_signature=signature,
+                exists=True,
+            ),
+            BuildArtifact(
+                node_key="output:new.html",
+                destination=tmp_path / "new.html",
+                built_signature=None,
+                exists=False,
+            ),
+        ],
+    )
+
+    assert len(plan.tasks) == 1
+    assert plan.tasks[0].reason == "missing output"
+    assert len(plan.unchanged) == 1
+
+
+def test_builder_persists_effective_graph_signatures(tmp_path: Path) -> None:
+    _site(tmp_path)
+    (tmp_path / "page.md").write_text("# Body", encoding="utf-8")
+
+    with patch("docbuild.converter.pypandoc.convert_text", return_value="<p>Body</p>"):
+        SiteBuilder(tmp_path).build()
+
+    with FileCache(tmp_path / ".cache.db") as cache:
+        record = cache.get("page.md")
+    assert record is not None
+    assert record["built_graph_signature"].startswith("build-graph-v1:")
 
 
 def test_config_change_rebuilds_only_templates_using_that_key(tmp_path: Path) -> None:
