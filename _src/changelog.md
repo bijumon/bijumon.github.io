@@ -7,6 +7,11 @@ Notable changes to `docbuild`.
 ## 0.5.0 — Unreleased
 
 ### Added
+- Add the optional `docbuild-serve` development command with a single initial build, incremental rebuilds, and LiveReload browser refresh.
+- Add a symlink-safe polling watcher for source documents, static assets, templates, and configuration, with change coalescing and serialized builds.
+- Document the `make serve` workflow and configurable HTTP and LiveReload ports.
+
+### Added
 - Load site metadata from the required source-root `_config.toml`.
 - Merge site-specific settings over generic, non-empty defaults.
 - Add a version string to the site configuration defaults.
