@@ -215,8 +215,14 @@ class SiteBuilder:
                 page["source"]: page
                 for page in site["pages"]
             }
-            site_signature = self._site_signature(site)
+            # Site metadata is global, but the page catalog is a separate
+            # virtual dependency. Only templates that read site.pages need it.
+            site_metadata_signature = self._site_signature(site_metadata)
+            site_catalog_signature = self._site_signature(
+                {"metadata": site_metadata, "pages": site["pages"]}
+            )
             template_signatures: dict[str, str] = {}
+            site_signatures: dict[str, str] = {}
             for relative_path, entry in indexed.items():
                 if entry.kind != "document":
                     continue
@@ -230,6 +236,11 @@ class SiteBuilder:
                         global_template_signature = self._template_signature()
                     signature = f"template-global-v1:{global_template_signature}"
                 template_signatures[relative_path] = signature
+                site_signatures[relative_path] = (
+                    site_catalog_signature
+                    if self.template_graph.uses_site_pages(template_name)
+                    else site_metadata_signature
+                )
 
             self.output.mkdir(parents=True, exist_ok=True)
 
@@ -241,7 +252,7 @@ class SiteBuilder:
 
                 destination = self._output_for(source)
                 if not indexer.needs_build(
-                    entry, destination, template_signatures[relative], site_signature
+                    entry, destination, template_signatures[relative], site_signatures[relative]
                 ):
                     self.reporter.info("Unchanged: %s", relative)
                     continue
@@ -257,7 +268,7 @@ class SiteBuilder:
                 rendered = self.renderer.render(source, metadata, html, site=site)
                 destination.parent.mkdir(parents=True, exist_ok=True)
                 destination.write_text(rendered, encoding="utf-8")
-                indexer.mark_built(entry, template_signatures[relative], site_signature)
+                indexer.mark_built(entry, template_signatures[relative], site_signatures[relative])
                 self.reporter.info(
                     "Built %s -> %s",
                     relative,
@@ -272,7 +283,7 @@ class SiteBuilder:
 
                 destination = self.output / source.relative_to(self.source)
                 if not indexer.needs_build(
-                    entry, destination, "", site_signature
+                    entry, destination, "", ""
                 ):
                     self.reporter.info("Unchanged: %s", relative)
                     continue
