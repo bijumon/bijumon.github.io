@@ -510,6 +510,22 @@ def test_dynamic_template_reference_uses_conservative_signature(tmp_path: Path) 
 
 
 
+
+def test_reused_builder_refreshes_template_dependency_graph(tmp_path: Path) -> None:
+    _site(tmp_path)
+    (tmp_path / "page.md").write_text("# Body", encoding="utf-8")
+    builder = SiteBuilder(tmp_path)
+
+    with patch("docbuild.converter.pypandoc.convert_text", return_value="<h1>Body</h1>") as convert:
+        builder.build()
+        (tmp_path / "_templates" / "page.template").write_text(
+            "<h1>Changed {{ content }}</h1>", encoding="utf-8"
+        )
+        builder.build()
+
+    assert convert.call_count == 2
+
+
 def test_failed_conversion_is_retried(tmp_path: Path) -> None:
     _site(tmp_path)
     (tmp_path / "page.md").write_text("# Body", encoding="utf-8")
