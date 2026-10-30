@@ -398,6 +398,52 @@ def test_static_files_are_not_recopied_when_unchanged(tmp_path: Path) -> None:
     copy.assert_not_called()
 
 
+
+def test_changed_static_asset_does_not_rebuild_documents(tmp_path: Path) -> None:
+    _site(tmp_path)
+    (tmp_path / "page.md").write_text("# Body", encoding="utf-8")
+    asset = tmp_path / "assets" / "site.css"
+    asset.parent.mkdir()
+    asset.write_text("body { color: black; }", encoding="utf-8")
+
+    with (
+        patch("docbuild.converter.pypandoc.convert_text", return_value="<p>Body</p>") as convert,
+        patch("docbuild.builder.shutil.copy2", wraps=__import__("shutil").copy2) as copy,
+    ):
+        SiteBuilder(tmp_path).build()
+        convert.reset_mock()
+        copy.reset_mock()
+
+        asset.write_text("body { color: white; }", encoding="utf-8")
+        SiteBuilder(tmp_path).build()
+
+    convert.assert_not_called()
+    copy.assert_called_once_with(asset, tmp_path / "_site" / "assets" / "site.css")
+
+
+def test_missing_static_output_is_copied_without_rebuilding_documents(
+    tmp_path: Path,
+) -> None:
+    _site(tmp_path)
+    (tmp_path / "page.md").write_text("# Body", encoding="utf-8")
+    asset = tmp_path / "assets" / "site.css"
+    asset.parent.mkdir()
+    asset.write_text("body {}", encoding="utf-8")
+
+    with (
+        patch("docbuild.converter.pypandoc.convert_text", return_value="<p>Body</p>") as convert,
+        patch("docbuild.builder.shutil.copy2", wraps=__import__("shutil").copy2) as copy,
+    ):
+        SiteBuilder(tmp_path).build()
+        convert.reset_mock()
+        copy.reset_mock()
+        (tmp_path / "_site" / "assets" / "site.css").unlink()
+        SiteBuilder(tmp_path).build()
+
+    convert.assert_not_called()
+    copy.assert_called_once_with(asset, tmp_path / "_site" / "assets" / "site.css")
+
+
 def test_missing_output_is_regenerated_even_when_source_is_unchanged(tmp_path: Path) -> None:
     _site(tmp_path)
     (tmp_path / "page.md").write_text("# Body", encoding="utf-8")
