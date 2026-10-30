@@ -1,3 +1,25 @@
+---
+title: "docbuild"
+description: "A Python static-site builder for Markdown and Djot content."
+layout: "page"
+---
+
+# docbuild
+
+**docbuild** is a Python static-site builder that converts Markdown and Djot
+documents into a publishable website. It uses Pandoc for conversion and Jinja2
+templates for page rendering. TOML or YAML frontmatter supplies page metadata.
+
+The builder supports incremental builds using a SQLite cache and a dependency
+graph, so changes rebuild only affected pages. Static assets are copied
+independently. It requires Python 3.13 or later.
+
+Run `make build` to generate the site in `_site/`, `make test` to run the
+test suite, or `make serve` for a local development server with incremental
+rebuilding and LiveReload.
+
+---
+
 # Development workflow
 
 ## Build once
