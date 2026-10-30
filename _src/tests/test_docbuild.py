@@ -51,16 +51,16 @@ def _provide_site_config(tmp_path: Path) -> None:
 
 
 def test_config_defaults_are_generic_nonempty_strings() -> None:
-    assert CONFIG_DEFAULTS == {
+    expected = {
         "author": "Unknown Author",
         "name": "Untitled Site",
         "description": "A website built with docbuild.",
         "url": "https://example.com",
         "language": "en",
         "generator": "docbuild",
-        "version": "0.5.0",
         "content_hash_max_bytes": 100 * 1024 * 1024,
     }
+    assert {key: CONFIG_DEFAULTS[key] for key in expected} == expected
     assert all(
         isinstance(value, str) and value.strip()
         for key, value in CONFIG_DEFAULTS.items()

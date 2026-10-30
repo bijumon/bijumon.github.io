@@ -2,14 +2,18 @@
 
 Notable changes to `docbuild`.
 
-> The repository does not have tagged releases yet. Versions `0.1.0` through `0.4.0` below are retrospective development milestones inferred from Git history, not previously published releases. `0.5.0` is the current proposed version.
+> The repository does not have tagged releases yet. Versions `0.1.0` through `0.5.0` below are retrospective development milestones inferred from Git history, not previously published releases. `0.6.0` is the current proposed version.
 
-## 0.5.0 — Unreleased
+## 0.6.0 — Unreleased
 
 ### Added
 - Add the optional `docbuild-serve` development command with a single initial build, incremental rebuilds, and LiveReload browser refresh.
 - Add a symlink-safe polling watcher for source documents, static assets, templates, and configuration, with change coalescing and serialized builds.
+- Use the existing dependency graph, incremental build planner, and SQLite cache for development rebuilds rather than introducing a separate invalidation mechanism.
+- Refresh the browser only after a successful build changes generated output.
 - Document the `make serve` workflow and configurable HTTP and LiveReload ports.
+
+## 0.5.0 — Configuration and cache improvements
 
 ### Added
 - Load site metadata from the required source-root `_config.toml`.
@@ -21,10 +25,7 @@ Notable changes to `docbuild`.
 
 ### Changed
 - Keep `content_hash_max_bytes` as an internal build setting rather than exposing it in template `site` metadata.
-
-### Changed
 - Use generic defaults for author, site name, description, URL, and generator; real sites should define their own values in `_config.toml`.
-- Align the configuration version, package metadata, and lockfile on `0.5.0`.
 
 ## 0.4.0 — Markdown and source-discovery improvements
 
