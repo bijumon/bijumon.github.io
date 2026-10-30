@@ -713,7 +713,9 @@ def test_build_planner_selects_missing_and_changed_outputs(tmp_path: Path) -> No
     graph = BuildGraph()
     graph.add_node("source:page.md", "document", "source-v1")
     graph.add_node("output:page.html", "output", "render-v1")
+    graph.add_node("output:new.html", "output", "render-v1")
     graph.depends_on("output:page.html", "source:page.md")
+    graph.depends_on("output:new.html", "source:page.md")
     signature = graph.signature("output:page.html")
 
     plan = BuildPlanner().plan(
