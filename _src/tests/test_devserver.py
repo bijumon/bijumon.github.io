@@ -340,6 +340,8 @@ def test_initial_build_happens_once_before_serving(tmp_path: Path) -> None:
         def serve(self, **kwargs: object) -> None:
             events.append("serve")
             assert kwargs["root"] == str(tmp_path / "_site")
+            assert self.signal_path is not None
+            assert Path(self.signal_path).is_file()
 
     class Watcher:
         def __init__(self, source: Path, callback: object, reporter: object) -> None:
@@ -362,7 +364,6 @@ def test_initial_build_happens_once_before_serving(tmp_path: Path) -> None:
     assert devserver.serve(port=8000, liveport=35729) == 0
     assert events == ["build", "watch", "serve", "stop"]
     assert server.signal_path is not None
-    assert Path(server.signal_path).is_file()
 
 
 def test_failed_rebuild_does_not_stop_development_server(tmp_path: Path) -> None:
