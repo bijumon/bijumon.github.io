@@ -215,12 +215,8 @@ class SiteBuilder:
                 page["source"]: page
                 for page in site["pages"]
             }
-            # Site metadata is global, but the page catalog is a separate
-            # virtual dependency. Only templates that read site.pages need it.
-            site_metadata_signature = self._site_signature(site_metadata)
-            site_catalog_signature = self._site_signature(
-                {"metadata": site_metadata, "pages": site["pages"]}
-            )
+            # Treat individual configuration keys and the page catalog as
+            # separate virtual inputs to each document's template dependency set.
             template_signatures: dict[str, str] = {}
             site_signatures: dict[str, str] = {}
             for relative_path, entry in indexed.items():
@@ -236,11 +232,23 @@ class SiteBuilder:
                         global_template_signature = self._template_signature()
                     signature = f"template-global-v1:{global_template_signature}"
                 template_signatures[relative_path] = signature
-                site_signatures[relative_path] = (
-                    site_catalog_signature
-                    if self.template_graph.uses_site_pages(template_name)
-                    else site_metadata_signature
+                metadata_keys, uses_site_pages = self.template_graph.site_dependencies(
+                    template_name
                 )
+                if metadata_keys is None:
+                    relevant_metadata = site_metadata
+                else:
+                    relevant_metadata = {
+                        key: {
+                            "present": key in site_metadata,
+                            "value": site_metadata.get(key),
+                        }
+                        for key in sorted(metadata_keys)
+                    }
+                site_context = {"metadata": relevant_metadata}
+                if uses_site_pages:
+                    site_context["pages"] = site["pages"]
+                site_signatures[relative_path] = self._site_signature(site_context)
 
             self.output.mkdir(parents=True, exist_ok=True)
 
