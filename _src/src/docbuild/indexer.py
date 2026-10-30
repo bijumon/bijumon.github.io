@@ -27,6 +27,7 @@ class IndexedFile:
     built_signature: dict[str, int | str] | None
     built_template_signature: str | None
     built_site_signature: str | None
+    built_graph_signature: str | None = None
     deleted: bool = False
 
 
@@ -157,6 +158,9 @@ class FileIndexer:
                 "built_site_signature": (
                     previous.get("built_site_signature") if previous else None
                 ),
+                "built_graph_signature": (
+                    previous.get("built_graph_signature") if previous else None
+                ),
                 "deleted": False,
             }
             if changed or previous is None or reappeared:
@@ -172,6 +176,7 @@ class FileIndexer:
                 built_signature=record["built_signature"],
                 built_template_signature=record["built_template_signature"],
                 built_site_signature=record["built_site_signature"],
+                built_graph_signature=record["built_graph_signature"],
                 deleted=False,
             )
         return indexed
@@ -192,6 +197,23 @@ class FileIndexer:
                 or entry.built_site_signature != site_signature
             )
         return False
+
+    def mark_graph_built(self, entry: IndexedFile, graph_signature: str) -> None:
+        """Persist the effective build graph signature after writing an output."""
+        cache = self._cache()
+        record = cache.get(entry.relative_path)
+        if record is None:
+            raise BuildError(f"missing cache entry after building {entry.relative_path}")
+        record["built_signature"] = entry.signature
+        record["built_graph_signature"] = graph_signature
+        record["built_template_signature"] = None
+        record["built_site_signature"] = None
+        record["deleted"] = False
+        cache.set(entry.relative_path, record)
+        entry.built_signature = entry.signature
+        entry.built_graph_signature = graph_signature
+        entry.built_template_signature = None
+        entry.built_site_signature = None
 
     def mark_built(
         self,
