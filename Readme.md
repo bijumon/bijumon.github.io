@@ -1,7 +1,6 @@
 ---
 title: "docbuild"
 description: "A Python static-site builder for Markdown and Djot content."
-url: "docbuild/"
 layout: "page"
 ---
 
