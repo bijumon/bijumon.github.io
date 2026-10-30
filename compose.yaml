@@ -20,7 +20,12 @@ services:
     working_dir: /work
     volumes:
       - .:/work
+    environment:
+      HOST: 0.0.0.0
+      PORT: ${PORT:-8000}
+      LIVEPORT: ${LIVEPORT:-35729}
     ports:
-      - "${PORT:-8000}:8000"
+      - "${PORT:-8000}:${PORT:-8000}"
+      - "${LIVEPORT:-35729}:${LIVEPORT:-35729}"
     entrypoint: ["/bin/sh"]
     command: ["/work/serve.sh"]
