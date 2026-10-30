@@ -28,8 +28,12 @@ class DocumentConverter:
         output_modules = (
             "builder.py",
             "build_graph.py",
+            "cache.py",
             "config.py",
             "converter.py",
+            "discovery.py",
+            "frontmatter.py",
+            "indexer.py",
             "renderer.py",
             "template_graph.py",
         )
@@ -61,6 +65,8 @@ class DocumentConverter:
             "jinja2": distribution_version("Jinja2"),
             "markupsafe": distribution_version("MarkupSafe"),
             "pypandoc": distribution_version("pypandoc"),
+            "python_frontmatter": distribution_version("python-frontmatter"),
+            "pyyaml": distribution_version("PyYAML"),
             "pandoc": pandoc_version,
         }
         digest = hashlib.sha256()
