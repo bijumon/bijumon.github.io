@@ -100,16 +100,16 @@ class BuildGraph:
             visiting.append(key)
             digest = hashlib.sha256()
             digest.update(node.kind.encode("utf-8"))
-            digest.update(b"\\0")
+            digest.update(b"\0")
             digest.update(node.key.encode("utf-8"))
-            digest.update(b"\\0")
+            digest.update(b"\0")
             digest.update(node.signature.encode("utf-8"))
-            digest.update(b"\\0")
+            digest.update(b"\0")
             for dependency_key in sorted(self._dependencies[key]):
                 digest.update(dependency_key.encode("utf-8"))
-                digest.update(b"\\0")
+                digest.update(b"\0")
                 digest.update(resolve(dependency_key).encode("ascii"))
-                digest.update(b"\\0")
+                digest.update(b"\0")
             visiting.pop()
 
             result = f"build-graph-v1:{digest.hexdigest()}"
