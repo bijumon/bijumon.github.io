@@ -1,12 +1,13 @@
 #!/bin/sh
 set -eu
 
-mkdir -p _site
-
+# LiveReload is installed for this invocation only; production builds do not
+# depend on it and the project runtime dependencies remain unchanged.
 exec uv run \
+    --project /work/_src \
     --python /usr/bin/python3 \
     --with livereload \
-    -- livereload \
-        --host 0.0.0.0 \
-        --port 8000 \
-        _site
+    -- docbuild-serve /work \
+        --host "${HOST:-0.0.0.0}" \
+        --port "${PORT:-8000}" \
+        --liveport "${LIVEPORT:-35729}"
