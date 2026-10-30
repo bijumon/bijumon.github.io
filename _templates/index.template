@@ -55,7 +55,7 @@
 {% for page in site.pages | reverse %}
 	{% if not page.skip_list %}
   <div class="page">
-    <a href="/{{ page.url }}">{{ page.title }}</a>
+    <a href="{{ page.url }}">{{ page.title }}</a>
     {% if page.description %}
      - {{ page.description }}
     {% endif %} 
