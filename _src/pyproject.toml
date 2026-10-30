@@ -16,6 +16,7 @@ dependencies = [
 
 [project.scripts]
 docbuild = "docbuild.cli:main"
+docbuild-serve = "docbuild.devserver:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/docbuild"]
