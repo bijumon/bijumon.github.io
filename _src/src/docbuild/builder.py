@@ -81,8 +81,7 @@ class SiteBuilder:
             raise BuildError(f"{message} (path is empty)")
 
         normalized = path if path.startswith("/") else f"/{path}"
-        return quote(normalized, safe="/%:@!        return path if path.startswith("/") else f"/{path}"
-'()*+,;=-._~")
+        return quote(normalized, safe="/%:@!$&'()*+,;=-._~")
 
     def _page_metadata(self, relative_path: str, entry: IndexedFile) -> dict[str, Any]:
         """Build the canonical metadata dictionary used for both page and site rendering."""
