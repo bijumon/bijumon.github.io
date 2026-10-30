@@ -9,7 +9,17 @@ import subprocess
 import sys
 import pytest
 
-from docbuild import (\n    BuildArtifact, BuildError, BuildGraph, BuildPlanner, DocumentDiscovery,\n    FileCache, FrontmatterReader, SiteBuilder,\n)\nfrom docbuild.config import CONFIG_DEFAULTS, load_config
+from docbuild import (
+    BuildArtifact,
+    BuildError,
+    BuildGraph,
+    BuildPlanner,
+    DocumentDiscovery,
+    FileCache,
+    FrontmatterReader,
+    SiteBuilder,
+)
+from docbuild.config import CONFIG_DEFAULTS, load_config
 
 
 def _site(tmp_path: Path, template: str = "<title>{{ page.title }}</title>{{ content }}") -> None:
