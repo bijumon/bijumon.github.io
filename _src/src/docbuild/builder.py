@@ -190,6 +190,9 @@ class SiteBuilder:
 
     def build(self) -> None:
         """Incrementally build changed documents and copy changed static files."""
+        # Re-scan template dependencies on every build invocation; callers may
+        # reuse a SiteBuilder instance after editing templates.
+        self.template_graph = TemplateDependencyGraph(self.renderer.environment)
         config = load_config(self.source)
         content_hash_max_bytes = config["content_hash_max_bytes"]
         # Hash policy is an internal build setting, not public template metadata.
