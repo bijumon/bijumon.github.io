@@ -68,10 +68,12 @@ class FileIndexer:
     ) -> dict[str, int | str]:
         """Return a content signature for small files and a metadata signature for large ones.
 
-        Files up to the configured limit are hashed in full. Larger files use
-        size, modification time, and change time to avoid reading their contents.
-        Change time improves detection when modification time is restored, but
-        metadata-only detection cannot guarantee that every content edit is found.
+        Files up to the configured limit are hashed in full. Their signatures
+        deliberately omit filesystem timestamps so they remain stable across
+        fresh checkouts, where unchanged files receive new modification times.
+        Larger files use size, modification time, and change time to avoid
+        reading their contents. Metadata-only detection cannot guarantee that
+        every content edit is found and may cause rebuilds across fresh checkouts.
         """
         try:
             stat = path.stat()
@@ -96,7 +98,6 @@ class FileIndexer:
             raise BuildError(f"cannot inspect source file {path}: {exc}") from exc
         return {
             "size": stat.st_size,
-            "mtime_ns": stat.st_mtime_ns,
             "sha256": digest,
         }
 
