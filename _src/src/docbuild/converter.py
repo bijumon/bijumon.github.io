@@ -36,9 +36,9 @@ class DocumentConverter:
         try:
             for module_name in output_modules:
                 source_digest.update(module_name.encode("utf-8"))
-                source_digest.update(b"\\0")
+                source_digest.update(b"\0")
                 source_digest.update((source_dir / module_name).read_bytes())
-                source_digest.update(b"\\0")
+                source_digest.update(b"\0")
         except OSError as exc:
             raise BuildError(f"cannot fingerprint docbuild rendering code: {exc}") from exc
 
@@ -66,13 +66,12 @@ class DocumentConverter:
         digest = hashlib.sha256()
         digest.update(b"docbuild-document-toolchain-v1\\0")
         digest.update(source_digest.hexdigest().encode("ascii"))
-        digest.update(b"\\0")
+        digest.update(b"\0")
         digest.update(
             json.dumps(runtime, sort_keys=True, separators=(",", ":")).encode("utf-8")
         )
         return f"document-toolchain-v1:{digest.hexdigest()}"
 
-    def convert(self, source: Path, text: str) -> str:
     def convert(self, source: Path, text: str) -> str:
         source_format = DOCUMENT_FORMATS[source.suffix.lower()]
         try:
