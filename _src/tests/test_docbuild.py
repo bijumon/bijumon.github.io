@@ -1339,7 +1339,7 @@ def test_timestamp_restore_allows_new_untracked_source_to_be_built(
 
     # Set up a committed baseline so the new page is genuinely untracked.
     (tmp_path / ".gitignore").write_text(
-        ".cache.db*\\n_site/\\n",
+        ".cache.db*" + chr(10) + "_site/" + chr(10),
         encoding="utf-8",
     )
     subprocess.run(["git", "init", "--quiet"], cwd=tmp_path, check=True)
@@ -1384,7 +1384,7 @@ def test_timestamp_restore_allows_new_untracked_source_to_be_built(
         ).stdout
         untracked_paths = [
             os.fsdecode(value)
-            for value in untracked.split(b"\\x00")
+            for value in untracked.split(bytes([0]))
             if value
         ]
         assert untracked_paths == ["new-page.md"]
