@@ -36,6 +36,54 @@ jobs:
           restore-keys: |
             docbuild-${{ runner.os }}-
 
+      # GitHub checkout gives unchanged files new filesystem timestamps. Compare the
+      # restored cache's commit with this checkout so only unchanged paths are normalized.
+      - name: Identify source changes since cached build
+        id: docbuild-changes
+        if: steps.docbuild-cache.outputs.cache-matched-key != ''
+        env:
+          CACHE_MATCHED_KEY: ${{ steps.docbuild-cache.outputs.cache-matched-key }}
+        run: |
+          set -eu
+          prefix="docbuild-${RUNNER_OS}-"
+          case "${CACHE_MATCHED_KEY}" in
+            "${prefix}"*) cached_revision="${CACHE_MATCHED_KEY#"${prefix}"}" ;;
+            *)
+              echo "::warning::Unrecognized docbuild cache key; timestamp normalization skipped."
+              echo "available=false" >> "${GITHUB_OUTPUT}"
+              exit 0
+              ;;
+          esac
+
+          if ! printf '%s' "${cached_revision}" | grep -Eq '^[0-9a-f]{40}$'; then
+            echo "::warning::No commit SHA found in the restored cache key; timestamp normalization skipped."
+            echo "available=false" >> "${GITHUB_OUTPUT}"
+            exit 0
+          fi
+
+          if ! git fetch --no-tags --depth=1 origin "${cached_revision}"; then
+            echo "::warning::Cached commit is unavailable; timestamp normalization skipped."
+            echo "available=false" >> "${GITHUB_OUTPUT}"
+            exit 0
+          fi
+
+          git diff --name-only --no-renames -z "${cached_revision}" "${GITHUB_SHA}" > .docbuild-changed-files
+          git ls-files --others --exclude-standard -z >> .docbuild-changed-files
+          echo "available=true" >> "${GITHUB_OUTPUT}"
+
+      # Restore cached mtimes for unchanged files; invalidate changed paths so they rebuild.
+      # This runs inside the build image because dbm.sqlite3 requires Python 3.13+.
+      - name: Restore cached source timestamps
+        if: steps.docbuild-changes.outputs.available == 'true'
+        continue-on-error: true
+        run: >-
+          docker compose run --rm build python -m docbuild.timestamp_restore
+          /work --changed-files /work/.docbuild-changed-files
+
+      - name: Remove timestamp change list
+        if: always()
+        run: rm -f .docbuild-changed-files
+
       - name: Build site
         run: docker compose run --rm build
 
