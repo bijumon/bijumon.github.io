@@ -20,6 +20,7 @@ from docbuild import (
     SiteBuilder,
 )
 from docbuild.config import CONFIG_DEFAULTS, load_config
+from docbuild.timestamp_restore import restore_source_timestamps
 
 
 def _site(tmp_path: Path, template: str = "<title>{{ page.title }}</title>{{ content }}") -> None:
@@ -1182,3 +1183,148 @@ def test_page_url_percent_encodes_spaces_in_source_and_custom_paths(
     ).read_text(encoding="utf-8")
     assert "<page-url>/Blender%20learning%20path.html</page-url>" in default_output
     assert "<page-url>/notes/Blender%20learning%20path.html</page-url>" in custom_output
+
+
+
+def test_timestamp_restore_reapplies_cached_mtime_for_unchanged_source(
+    tmp_path: Path,
+) -> None:
+    _site(tmp_path)
+    source = tmp_path / "page.md"
+    source.write_text("# Body", encoding="utf-8")
+
+    with patch("docbuild.converter.pypandoc.convert_text", return_value="<h1>Body</h1>") as convert:
+        SiteBuilder(tmp_path).build()
+        cached_mtime = source.stat().st_mtime_ns
+        os.utime(
+            source,
+            ns=(source.stat().st_atime_ns, cached_mtime + 5_000_000_000),
+        )
+
+        summary = restore_source_timestamps(tmp_path, [])
+        assert summary.restored == 1
+        assert source.stat().st_mtime_ns == cached_mtime
+
+        SiteBuilder(tmp_path).build()
+
+    assert convert.call_count == 1
+
+
+def test_timestamp_restore_invalidates_changed_paths_even_with_same_size_and_mtime(
+    tmp_path: Path,
+) -> None:
+    _site(tmp_path)
+    source = tmp_path / "page.md"
+    source.write_text("# First", encoding="utf-8")
+
+    with patch(
+        "docbuild.converter.pypandoc.convert_text",
+        side_effect=["<h1>First</h1>", "<h1>Other</h1>"],
+    ) as convert:
+        SiteBuilder(tmp_path).build()
+        original_stat = source.stat()
+        source.write_text("# Other", encoding="utf-8")
+        os.utime(
+            source,
+            ns=(source.stat().st_atime_ns, original_stat.st_mtime_ns),
+        )
+
+        summary = restore_source_timestamps(tmp_path, ["page.md"])
+        assert summary.invalidated == 1
+        assert source.stat().st_mtime_ns == original_stat.st_mtime_ns
+
+        SiteBuilder(tmp_path).build()
+
+    assert convert.call_count == 2
+    assert "<h1>Other</h1>" in (
+        tmp_path / "_site" / "page.html"
+    ).read_text(encoding="utf-8")
+
+
+def test_timestamp_restore_rebases_ctime_for_large_files(tmp_path: Path) -> None:
+    payload = b"large-media-payload"
+    source = tmp_path / "media.bin"
+    source.write_bytes(payload)
+    config = tmp_path / "_config.toml"
+    config.write_text(
+        config.read_text(encoding="utf-8") + "content_hash_max_bytes = 4\n",
+        encoding="utf-8",
+    )
+
+    with patch("docbuild.builder.shutil.copy2", wraps=__import__("shutil").copy2) as copy:
+        SiteBuilder(tmp_path).build()
+        original_stat = source.stat()
+        os.utime(
+            source,
+            ns=(original_stat.st_atime_ns, original_stat.st_mtime_ns + 5_000_000_000),
+        )
+
+        summary = restore_source_timestamps(tmp_path, [])
+        normalized_stat = source.stat()
+        assert summary.restored == 1
+        assert normalized_stat.st_mtime_ns == original_stat.st_mtime_ns
+
+        with FileCache(tmp_path / ".cache.db") as cache:
+            record = cache.get("media.bin")
+        assert record is not None
+        assert record["signature"]["ctime_ns"] == normalized_stat.st_ctime_ns
+        assert record["built_signature"]["ctime_ns"] == normalized_stat.st_ctime_ns
+
+        copy.reset_mock()
+        SiteBuilder(tmp_path).build()
+
+    copy.assert_not_called()
+
+
+def test_timestamp_restore_invalidates_size_mismatches(tmp_path: Path) -> None:
+    source = tmp_path / "asset.bin"
+    source.write_bytes(b"original")
+    SiteBuilder(tmp_path).build()
+
+    source.write_bytes(b"changed-size")
+    summary = restore_source_timestamps(tmp_path, [])
+
+    assert summary.invalidated == 1
+    with FileCache(tmp_path / ".cache.db") as cache:
+        record = cache.get("asset.bin")
+    assert record is not None
+    assert record["signature"] is None
+
+
+
+def test_timestamp_restore_invalidates_changed_large_asset_with_same_size_and_mtime(
+    tmp_path: Path,
+) -> None:
+    source = tmp_path / "media.bin"
+    source.write_bytes(b"before")
+    config = tmp_path / "_config.toml"
+    config.write_text(
+        config.read_text(encoding="utf-8") + "content_hash_max_bytes = 4\n",
+        encoding="utf-8",
+    )
+
+    with patch("docbuild.builder.shutil.copy2", wraps=__import__("shutil").copy2) as copy:
+        SiteBuilder(tmp_path).build()
+        original_stat = source.stat()
+        source.write_bytes(b"after!")
+        os.utime(
+            source,
+            ns=(source.stat().st_atime_ns, original_stat.st_mtime_ns),
+        )
+
+        summary = restore_source_timestamps(tmp_path, ["media.bin"])
+        assert summary.invalidated == 1
+        assert source.stat().st_size == original_stat.st_size
+        assert source.stat().st_mtime_ns == original_stat.st_mtime_ns
+
+        with FileCache(tmp_path / ".cache.db") as cache:
+            record = cache.get("media.bin")
+        assert record is not None
+        assert record["signature"] is None
+        assert record["built_graph_signature"] is None
+
+        copy.reset_mock()
+        SiteBuilder(tmp_path).build()
+
+    copy.assert_called_once()
+    assert (tmp_path / "_site" / "media.bin").read_bytes() == b"after!"
