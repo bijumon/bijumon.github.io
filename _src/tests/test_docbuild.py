@@ -1328,3 +1328,41 @@ def test_timestamp_restore_invalidates_changed_large_asset_with_same_size_and_mt
 
     copy.assert_called_once()
     assert (tmp_path / "_site" / "media.bin").read_bytes() == b"after!"
+
+
+def test_timestamp_restore_allows_new_untracked_source_to_be_built(
+    tmp_path: Path,
+) -> None:
+    _site(tmp_path, template="{{ content }}")
+    existing = tmp_path / "existing.md"
+    existing.write_text("# Existing", encoding="utf-8")
+    new_source = tmp_path / "new-page.md"
+
+    with patch(
+        "docbuild.converter.pypandoc.convert_text",
+        side_effect=["<h1>Existing</h1>", "<h1>New page</h1>"],
+    ) as convert:
+        SiteBuilder(tmp_path).build()
+
+        # The new source is absent from both the previous tree and build cache.
+        with FileCache(tmp_path / ".cache.db") as cache:
+            assert cache.get("new-page.md") is None
+
+        new_source.write_text("# New page", encoding="utf-8")
+        with FileCache(tmp_path / ".cache.db") as cache:
+            assert cache.get("new-page.md") is None
+
+        # CI adds untracked paths with git ls-files --others --exclude-standard.
+        summary = restore_source_timestamps(tmp_path, ["new-page.md"])
+        assert summary.restored == 1
+        assert summary.invalidated == 0
+
+        SiteBuilder(tmp_path).build()
+
+    assert convert.call_count == 2
+    assert (tmp_path / "_site" / "new-page.html").read_text(
+        encoding="utf-8"
+    ) == "<h1>New page</h1>"
+    with FileCache(tmp_path / ".cache.db") as cache:
+        record = cache.get("new-page.md")
+    assert record is not None
