@@ -1333,7 +1333,7 @@ def test_timestamp_restore_invalidates_changed_large_asset_with_same_size_and_mt
 def test_timestamp_restore_allows_new_untracked_source_to_be_built(
     tmp_path: Path,
 ) -> None:
-    _site(tmp_path)
+    _site(tmp_path, template="{{ content }}")
     existing = tmp_path / "existing.md"
     existing.write_text("# Existing", encoding="utf-8")
 
