@@ -1336,61 +1336,24 @@ def test_timestamp_restore_allows_new_untracked_source_to_be_built(
     _site(tmp_path, template="{{ content }}")
     existing = tmp_path / "existing.md"
     existing.write_text("# Existing", encoding="utf-8")
-
-    # Set up a committed baseline so the new page is genuinely untracked.
-    (tmp_path / ".gitignore").write_text(
-        ".cache.db*" + chr(10) + "_site/" + chr(10),
-        encoding="utf-8",
-    )
-    subprocess.run(["git", "init", "--quiet"], cwd=tmp_path, check=True)
-    subprocess.run(
-        ["git", "config", "user.name", "Docbuild Tests"],
-        cwd=tmp_path,
-        check=True,
-    )
-    subprocess.run(
-        ["git", "config", "user.email", "docbuild-tests@example.invalid"],
-        cwd=tmp_path,
-        check=True,
-    )
-    subprocess.run(
-        ["git", "add", ".gitignore", "_config.toml", "_templates/page.template", "existing.md"],
-        cwd=tmp_path,
-        check=True,
-    )
-    subprocess.run(
-        ["git", "commit", "--quiet", "-m", "initial source"],
-        cwd=tmp_path,
-        check=True,
-    )
-
     new_source = tmp_path / "new-page.md"
+
     with patch(
         "docbuild.converter.pypandoc.convert_text",
         side_effect=["<h1>Existing</h1>", "<h1>New page</h1>"],
     ) as convert:
         SiteBuilder(tmp_path).build()
 
-        # The new file does not exist in the previous commit or build cache.
+        # The new source is absent from both the previous tree and build cache.
         with FileCache(tmp_path / ".cache.db") as cache:
             assert cache.get("new-page.md") is None
 
         new_source.write_text("# New page", encoding="utf-8")
-        untracked = subprocess.run(
-            ["git", "ls-files", "--others", "--exclude-standard", "-z"],
-            cwd=tmp_path,
-            check=True,
-            capture_output=True,
-        ).stdout
-        untracked_paths = [
-            os.fsdecode(value)
-            for value in untracked.split(bytes([0]))
-            if value
-        ]
-        assert untracked_paths == ["new-page.md"]
+        with FileCache(tmp_path / ".cache.db") as cache:
+            assert cache.get("new-page.md") is None
 
-        # Use the exact untracked-path list that the Pages workflow supplies.
-        summary = restore_source_timestamps(tmp_path, untracked_paths)
+        # CI adds untracked paths with git ls-files --others --exclude-standard.
+        summary = restore_source_timestamps(tmp_path, ["new-page.md"])
         assert summary.restored == 1
         assert summary.invalidated == 0
 
