@@ -1,3 +1,11 @@
++++
+title = "Djot document sample"
+date = "2023-01-04"
+source_url = "https://github.com/jgm/djot.js/commits/5ad8b7fd622e1e7a6c88bf0f3171d79d14be6757/bench/readme.dj"
+author = "John MacFarlane"
+author_url = "https://orcid.org/0000-0003-2557-9090"
++++
+
 {#djot}
 # Djot
 
