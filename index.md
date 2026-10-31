@@ -6,6 +6,8 @@ skip_list: yes
 ---
 <b>Now Reading</b> :
 
+[“We should be more ambitious with the software we build”](https://danluu.com/ambitious/) - [discussion @HN](https://news.ycombinator.com/item?id=50225695)
+
 [Local Model Explorer - a Hugging Face Space by LocalLLaMA](https://huggingface.co/spaces/LocalLLaMA/local-model-explorer)
 
 [goose | Your open source AI agent](https://goose-docs.ai/)
