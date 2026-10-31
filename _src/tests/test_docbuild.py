@@ -1247,7 +1247,7 @@ def test_timestamp_restore_rebases_ctime_for_large_files(tmp_path: Path) -> None
     source.write_bytes(payload)
     config = tmp_path / "_config.toml"
     config.write_text(
-        config.read_text(encoding="utf-8") + "content_hash_max_bytes = 4\\n",
+        config.read_text(encoding="utf-8") + "content_hash_max_bytes = 4\n",
         encoding="utf-8",
     )
 
