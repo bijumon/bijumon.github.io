@@ -2,9 +2,17 @@
 
 Notable changes to `docbuild`.
 
-> The repository does not have tagged releases yet. Versions `0.1.0` through `0.5.0` below are retrospective development milestones inferred from Git history, not previously published releases. `0.6.0` is the current proposed version.
+> The repository does not have tagged releases yet. Versions `0.1.0` through `0.6.0` below are development milestones inferred from Git history, not tagged releases. `0.7.0` is the current proposed version.
 
-## 0.6.0 — Unreleased
+## 0.7.0 — Unreleased
+
+### Added
+- Cache the docbuild database and generated site between GitHub Pages builds to preserve incremental-build state.
+- Restore cached modification times for unchanged source files after fresh GitHub checkouts, while invalidating changed files so they rebuild.
+- Handle large-file timestamp changes conservatively, including static-asset graph signatures, to avoid unnecessary copies without missing changed assets.
+- Cover genuinely new, previously uncached source files in timestamp-restoration regression tests.
+
+## 0.6.0 — Development milestone
 
 ### Added
 - Add the optional `docbuild-serve` development command with a single initial build, incremental rebuilds, and LiveReload browser refresh.
