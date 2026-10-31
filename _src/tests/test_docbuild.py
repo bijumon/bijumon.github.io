@@ -1289,3 +1289,42 @@ def test_timestamp_restore_invalidates_size_mismatches(tmp_path: Path) -> None:
         record = cache.get("asset.bin")
     assert record is not None
     assert record["signature"] is None
+
+
+
+def test_timestamp_restore_invalidates_changed_large_asset_with_same_size_and_mtime(
+    tmp_path: Path,
+) -> None:
+    source = tmp_path / "media.bin"
+    source.write_bytes(b"before")
+    config = tmp_path / "_config.toml"
+    config.write_text(
+        config.read_text(encoding="utf-8") + "content_hash_max_bytes = 4\n",
+        encoding="utf-8",
+    )
+
+    with patch("docbuild.builder.shutil.copy2", wraps=__import__("shutil").copy2) as copy:
+        SiteBuilder(tmp_path).build()
+        original_stat = source.stat()
+        source.write_bytes(b"after!")
+        os.utime(
+            source,
+            ns=(source.stat().st_atime_ns, original_stat.st_mtime_ns),
+        )
+
+        summary = restore_source_timestamps(tmp_path, ["media.bin"])
+        assert summary.invalidated == 1
+        assert source.stat().st_size == original_stat.st_size
+        assert source.stat().st_mtime_ns == original_stat.st_mtime_ns
+
+        with FileCache(tmp_path / ".cache.db") as cache:
+            record = cache.get("media.bin")
+        assert record is not None
+        assert record["signature"] is None
+        assert record["built_graph_signature"] is None
+
+        copy.reset_mock()
+        SiteBuilder(tmp_path).build()
+
+    copy.assert_called_once()
+    assert (tmp_path / "_site" / "media.bin").read_bytes() == b"after!"
