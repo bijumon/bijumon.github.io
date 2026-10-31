@@ -31,6 +31,26 @@ def _relative_source_path(value: str) -> str | None:
     return normalized if normalized not in ("", ".") else None
 
 
+def _invalidate(record: dict[str, object]) -> None:
+    """Force the planner to rebuild an output on the next index/build pass."""
+    record["signature"] = None
+    record["built_graph_signature"] = None
+
+
+def _asset_graph_signature(relative_path: str, signature: dict[str, object]) -> str:
+    """Recalculate the simple source-to-copy graph after rebasing asset ctime."""
+    from .build_graph import BuildGraph
+    from .builder import SiteBuilder
+
+    source_key = f"source:{relative_path}"
+    output_key = f"output:asset:{relative_path}"
+    graph = BuildGraph()
+    graph.add_node(source_key, "asset", SiteBuilder._site_signature(signature))
+    graph.add_node(output_key, "output", "static-copy-v1")
+    graph.depends_on(output_key, source_key)
+    return graph.signature(output_key)
+
+
 def restore_source_timestamps(
     source: Path,
     changed_paths: Iterable[str],
@@ -40,9 +60,10 @@ def restore_source_timestamps(
 
     The caller supplies paths changed between the commit represented by the
     restored cache and the checked-out commit. Unchanged files have their
-    cached mtime restored. For metadata-only signatures, ctime cannot be
-    restored, so both current and successfully-built signatures are rebased
-    to the current ctime after the source mtime is normalized.
+    cached mtime restored. For metadata-only asset signatures, ctime cannot be
+    restored, so the file signature and its simple copy-graph fingerprint are
+    rebased to the current ctime. Oversized documents are conservatively
+    invalidated because their rendering graph has additional dependencies.
     """
     root = source.resolve()
     reporter = reporter or Reporter()
@@ -76,7 +97,7 @@ def restore_source_timestamps(
                 if relative_path in changed:
                     # Force a rebuild even if metadata happens to match the old
                     # signature (for example, a same-size edit with preserved mtime).
-                    record["signature"] = None
+                    _invalidate(record)
                     cache.set(relative_path, record)
                     invalidated += 1
                     continue
@@ -89,7 +110,7 @@ def restore_source_timestamps(
                         continue
                     stat = candidate.stat()
                 except OSError:
-                    # Missing files are handled by the normal index scan.
+                    # Missing files are handled by the normal indexer.
                     skipped += 1
                     continue
 
@@ -106,7 +127,7 @@ def restore_source_timestamps(
                     or not isinstance(cached_mtime, int)
                     or isinstance(cached_mtime, bool)
                 ):
-                    record["signature"] = None
+                    _invalidate(record)
                     cache.set(relative_path, record)
                     invalidated += 1
                     continue
@@ -114,7 +135,7 @@ def restore_source_timestamps(
                 if stat.st_size != cached_size:
                     # The Git path comparison and the cached record disagree;
                     # prefer a rebuild over normalizing a potentially changed file.
-                    record["signature"] = None
+                    _invalidate(record)
                     cache.set(relative_path, record)
                     invalidated += 1
                     continue
@@ -127,7 +148,7 @@ def restore_source_timestamps(
                         )
                     normalized_stat = candidate.stat()
                 except OSError:
-                    record["signature"] = None
+                    _invalidate(record)
                     cache.set(relative_path, record)
                     invalidated += 1
                     continue
@@ -135,24 +156,40 @@ def restore_source_timestamps(
                 if normalized_stat.st_mtime_ns != cached_mtime:
                     # Some filesystems cannot represent the cached nanosecond
                     # value exactly. Do not claim that normalization succeeded.
-                    record["signature"] = None
+                    _invalidate(record)
                     cache.set(relative_path, record)
                     invalidated += 1
                     continue
 
                 signature = dict(signature)
                 signature["mtime_ns"] = normalized_stat.st_mtime_ns
-                if "ctime_ns" in signature:
-                    signature["ctime_ns"] = normalized_stat.st_ctime_ns
-                record["signature"] = signature
 
                 built_signature = record.get("built_signature")
                 if isinstance(built_signature, dict):
                     built_signature = dict(built_signature)
                     if "mtime_ns" in built_signature:
                         built_signature["mtime_ns"] = normalized_stat.st_mtime_ns
-                    if "ctime_ns" in built_signature:
+
+                if "ctime_ns" in signature:
+                    if record.get("kind") != "static":
+                        # Documents have transitive template/toolchain/site
+                        # dependencies, so this helper cannot safely rewrite
+                        # their effective output-graph fingerprint.
+                        _invalidate(record)
+                        cache.set(relative_path, record)
+                        invalidated += 1
+                        continue
+
+                    signature["ctime_ns"] = normalized_stat.st_ctime_ns
+                    if isinstance(built_signature, dict) and "ctime_ns" in built_signature:
                         built_signature["ctime_ns"] = normalized_stat.st_ctime_ns
+                    record["built_graph_signature"] = _asset_graph_signature(
+                        relative_path,
+                        signature,
+                    )
+
+                record["signature"] = signature
+                if isinstance(built_signature, dict):
                     record["built_signature"] = built_signature
 
                 cache.set(relative_path, record)
